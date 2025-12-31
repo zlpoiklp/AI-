@@ -1,0 +1,2809 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 协同工作台</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+            --bg-tertiary: #374151;
+            --border-color: #374151;
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --accent-color: #8b5cf6;
+            --accent-hover: #7c3aed;
+            --msg-bg-1: #1e3a5f;
+            --msg-bg-2: #1a332a;
+            --msg-bg-3: #2d2a1e;
+        }
+        
+        .theme-dark { 
+            --bg-primary: #111827; --bg-secondary: #1f2937; --bg-tertiary: #374151; 
+            --border-color: #374151; --text-primary: #f9fafb; --text-secondary: #9ca3af; 
+            --accent-color: #8b5cf6; --accent-hover: #7c3aed;
+            --theme-decor: '';
+        }
+        .theme-spring { 
+            --bg-primary: #1a0a0a; --bg-secondary: #2d1515; --bg-tertiary: #4a1f1f; 
+            --border-color: #6b2c2c; --text-primary: #ffd700; --text-secondary: #ffb347; 
+            --accent-color: #dc2626; --accent-hover: #b91c1c;
+            --theme-decor: '🧧';
+        }
+        .theme-christmas { 
+            --bg-primary: #0f1a0f; --bg-secondary: #1a2e1a; --bg-tertiary: #1e3a1e; 
+            --border-color: #2d4a2d; --text-primary: #f0fff0; --text-secondary: #98d998; 
+            --accent-color: #dc2626; --accent-hover: #b91c1c;
+            --theme-decor: '❄️';
+        }
+        .theme-halloween { 
+            --bg-primary: #0d0d0d; --bg-secondary: #1a1a1a; --bg-tertiary: #2d2d2d; 
+            --border-color: #404040; --text-primary: #ff9500; --text-secondary: #cc7700; 
+            --accent-color: #8b00ff; --accent-hover: #6b00cc;
+            --theme-decor: '🎃';
+        }
+        .theme-valentine { 
+            --bg-primary: #1a0a14; --bg-secondary: #2d1525; --bg-tertiary: #4a1f3a; 
+            --border-color: #6b2c50; --text-primary: #ffb6c1; --text-secondary: #ff69b4; 
+            --accent-color: #ec4899; --accent-hover: #db2777;
+            --theme-decor: '💕';
+        }
+        .theme-midautumn { 
+            --bg-primary: #0f0f1e; --bg-secondary: #1a1a30; --bg-tertiary: #252545; 
+            --border-color: #3d3d6b; --text-primary: #fffacd; --text-secondary: #daa520; 
+            --accent-color: #fbbf24; --accent-hover: #f59e0b;
+            --theme-decor: '🥮';
+        }
+        .theme-sakura { 
+            --bg-primary: #1a1015; --bg-secondary: #2d1a25; --bg-tertiary: #3d2535; 
+            --border-color: #5a3a4a; --text-primary: #fff0f5; --text-secondary: #dda0dd; 
+            --accent-color: #f472b6; --accent-hover: #ec4899;
+            --theme-decor: '🌸';
+        }
+        .theme-ocean { 
+            --bg-primary: #0a192f; --bg-secondary: #112240; --bg-tertiary: #1d3a5c; 
+            --border-color: #234876; --text-primary: #ccd6f6; --text-secondary: #8892b0; 
+            --accent-color: #64ffda; --accent-hover: #4fd1c5;
+            --theme-decor: '🌊';
+        }
+        .theme-light { 
+            --bg-primary: #f8fafc; --bg-secondary: #ffffff; --bg-tertiary: #e2e8f0; 
+            --border-color: #cbd5e1; --text-primary: #1e293b; --text-secondary: #64748b; 
+            --accent-color: #8b5cf6; --accent-hover: #7c3aed;
+            --theme-decor: '☀️';
+        }
+        
+        /* 节日装饰动画 */
+        @keyframes float-down {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0.3; }
+        }
+        @keyframes float-up {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        
+        .theme-decor-container {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        .theme-decor-item {
+            position: absolute; font-size: 20px; opacity: 0.4;
+            animation: float-down 15s linear infinite;
+        }
+        .theme-spring .theme-decor-item { color: #ff0000; }
+        .theme-christmas .theme-decor-item { color: #ffffff; }
+        .theme-halloween .theme-decor-item { color: #ff9500; }
+        .theme-valentine .theme-decor-item { color: #ff69b4; }
+        .theme-sakura .theme-decor-item { color: #ffb7c5; }
+
+        body { background-color: var(--bg-primary); color: var(--text-primary); }
+        .bg-themed-primary { background-color: var(--bg-primary); }
+        .bg-themed-secondary { background-color: var(--bg-secondary); }
+        .bg-themed-tertiary { background-color: var(--bg-tertiary); }
+        .border-themed { border-color: var(--border-color); }
+        .text-themed-primary { color: var(--text-primary); }
+        .text-themed-secondary { color: var(--text-secondary); }
+        .accent-bg { background-color: var(--accent-color); }
+        .accent-bg:hover { background-color: var(--accent-hover); }
+
+        .chat-container::-webkit-scrollbar, .sidebar::-webkit-scrollbar, .settings-content::-webkit-scrollbar, .model-dropdown-menu::-webkit-scrollbar { width: 6px; }
+        .chat-container::-webkit-scrollbar-thumb, .sidebar::-webkit-scrollbar-thumb, .settings-content::-webkit-scrollbar-thumb, .model-dropdown-menu::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 3px; }
+        .chat-container::-webkit-scrollbar-track, .sidebar::-webkit-scrollbar-track, .settings-content::-webkit-scrollbar-track { background: transparent; }
+        
+        .message-content pre { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; overflow-x: auto; margin: 8px 0; }
+        .message-content code { background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; font-size: 0.875em; }
+        .message-content pre code { background: transparent; padding: 0; }
+        .message-content p { margin: 8px 0; }
+        .message-content ul, .message-content ol { margin: 8px 0; padding-left: 20px; }
+        
+        .typing-indicator span { animation: bounce 1.4s infinite ease-in-out both; }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        
+        .gradient-border { 
+            background: linear-gradient(135deg, var(--accent-color) 0%, #3b82f6 100%); 
+            padding: 1px; 
+            border-radius: 12px; 
+        }
+        
+        .sidebar-wrapper {
+            position: relative;
+            width: 260px;
+            flex-shrink: 0;
+            transition: width 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .sidebar-wrapper.collapsed { width: 0; }
+        .sidebar-inner {
+            width: 260px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+            transform: translateX(0);
+            transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .sidebar-wrapper.collapsed .sidebar-inner { 
+            opacity: 0; 
+            transform: translateX(-30px);
+            pointer-events: none;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1s linear infinite; }
+        
+        .input-themed { 
+            background-color: var(--bg-tertiary); 
+            border-color: var(--border-color); 
+            color: var(--text-primary); 
+            transition: all 0.2s;
+            font-size: 15px; /* 增大了输入框字体大小 */
+        }
+        .input-themed:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2); }
+        .input-themed::placeholder { color: var(--text-secondary); }
+        
+        input[type="range"] { -webkit-appearance: none; height: 6px; background: var(--bg-tertiary); border-radius: 3px; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: var(--accent-color); border-radius: 50%; cursor: pointer; transition: transform 0.2s; }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        
+        .modal { transition: opacity 0.3s ease, backdrop-filter 0.3s ease; }
+        .modal.hidden { opacity: 0; pointer-events: none; }
+        .modal-content { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease; }
+        .modal.hidden .modal-content { transform: scale(0.9) translateY(-20px); opacity: 0; }
+        
+        .history-item { transition: all 0.2s; border-radius: 8px; }
+        .history-item:hover { background-color: var(--bg-tertiary); transform: translateX(4px); }
+        .history-item.active { background-color: var(--accent-color); }
+        
+        .color-option { 
+            width: 28px; height: 28px; border-radius: 6px; cursor: pointer; 
+            border: 2px solid transparent; transition: all 0.2s; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .color-option:hover { transform: scale(1.15); }
+        .color-option.selected { border-color: white; box-shadow: 0 0 0 2px var(--accent-color), 0 2px 8px rgba(0,0,0,0.3); }
+        
+        .model-dropdown { position: relative; }
+        .model-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            max-height: 360px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+        }
+        .model-dropdown-menu.show { display: block; animation: slideDown 0.2s ease; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .model-dropdown-item { 
+            padding: 8px 12px; cursor: pointer; font-size: 12px; 
+            transition: all 0.15s; display: flex; align-items: center; gap: 8px; 
+        }
+        .model-dropdown-item:hover { background: var(--bg-tertiary); }
+        .model-dropdown-item.active { background: var(--accent-color); }
+        .model-search { 
+            position: sticky; top: 0; background: var(--bg-secondary); 
+            padding: 10px; border-bottom: 1px solid var(--border-color); z-index: 10;
+        }
+        .model-search input {
+            width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color);
+            border-radius: 6px; padding: 8px 12px; font-size: 12px; color: var(--text-primary);
+        }
+        .model-search input:focus { outline: none; border-color: var(--accent-color); }
+        .model-category {
+            padding: 8px 12px; font-size: 11px; font-weight: 600; color: var(--text-secondary);
+            background: var(--bg-primary); text-transform: uppercase; letter-spacing: 0.5px;
+            display: flex; align-items: center; gap: 6px; position: sticky; top: 45px; z-index: 5;
+        }
+        .model-tag {
+            font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;
+        }
+        .tag-vision { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; }
+        .tag-text { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .tag-reasoning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .tag-image { background: linear-gradient(135deg, #ec4899, #db2777); color: white; }
+        .tag-code { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; }
+        .tag-embedding { background: linear-gradient(135deg, #6b7280, #4b5563); color: white; }
+        
+        .category-tabs {
+            display: flex; gap: 4px; padding: 8px 10px; border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary); position: sticky; top: 45px; z-index: 8; flex-wrap: wrap;
+        }
+        .category-tab {
+            padding: 4px 10px; font-size: 11px; border-radius: 6px; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; gap: 4px;
+            background: var(--bg-tertiary);
+        }
+        .category-tab:hover { background: var(--accent-color); color: white; }
+        .category-tab.active { background: var(--accent-color); color: white; }
+        
+        .chat-bg { background-size: cover; background-position: center; background-repeat: no-repeat; }
+        
+        .file-preview { display: flex; gap: 6px; flex-wrap: wrap; max-height: 80px; overflow-y: auto; }
+        .file-preview-item {
+            background: var(--bg-tertiary); padding: 4px 8px; border-radius: 6px; font-size: 11px;
+            display: flex; align-items: center; gap: 6px; border: 1px solid var(--border-color);
+        }
+        .file-preview-item img { width: 24px; height: 24px; object-fit: cover; border-radius: 4px; }
+        
+        .mini-input-area {
+            background: var(--bg-secondary); border-top: 1px solid var(--border-color); padding: 6px 8px;
+            transition: all 0.3s ease;
+        }
+        .mini-input-area.collapsed {
+            padding: 0; height: 0; overflow: hidden; border-top: none;
+        }
+        .mini-input-toggle {
+            position: absolute; top: -20px; right: 8px; z-index: 10;
+            background: var(--bg-secondary); border: 1px solid var(--border-color);
+            border-bottom: none; border-radius: 6px 6px 0 0; padding: 2px 8px;
+            font-size: 10px; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 4px;
+        }
+        .mini-input-toggle:hover { background: var(--accent-color); }
+        .mini-input {
+            background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px;
+            padding: 8px 10px; font-size: 15px; color: var(--text-primary); resize: none; width: 100%; /* 增大了独立输入框字体大小 */
+            transition: all 0.2s;
+        }
+        .mini-input:focus { outline: none; border-color: var(--accent-color); }
+        
+        .msg-bubble-1 { background-color: var(--msg-bg-1); }
+        .msg-bubble-2 { background-color: var(--msg-bg-2); }
+        .msg-bubble-3 { background-color: var(--msg-bg-3); }
+        
+        .stop-btn {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            animation: pulse-stop 1.5s infinite;
+        }
+        .stop-btn:hover { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+        @keyframes pulse-stop {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+        }
+        
+        .card { 
+            background: var(--bg-tertiary); 
+            border-radius: 12px; 
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
+        .card:hover { border-color: var(--accent-color); }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-color), #3b82f6);
+            color: white; border: none; transition: all 0.2s;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4); }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary); color: var(--text-primary);
+            border: 1px solid var(--border-color); transition: all 0.2s;
+        }
+        .btn-secondary:hover { background: var(--accent-color); border-color: var(--accent-color); }
+        
+        .theme-card {
+            padding: 12px; border-radius: 10px; cursor: pointer; transition: all 0.2s;
+            border: 2px solid transparent; text-align: center;
+        }
+        .theme-card:hover { transform: scale(1.05); }
+        .theme-card.selected { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3); }
+        
+        .section-title {
+            font-size: 12px; font-weight: 600; color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section-title::after {
+            content: ''; flex: 1; height: 1px; background: var(--border-color);
+        }
+
+        /* 跨域分析面板样式 */
+        .cross-analyze-panel {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 8px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+            z-index: 50;
+            display: none;
+        }
+        .cross-analyze-panel.show { display: block; animation: slideUp 0.2s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .ref-checkbox {
+            display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+            background: var(--bg-tertiary); border-radius: 8px; cursor: pointer;
+            transition: all 0.2s; border: 2px solid transparent;
+        }
+        .ref-checkbox:hover { border-color: var(--accent-color); }
+        .ref-checkbox.selected { border-color: var(--accent-color); background: rgba(139, 92, 246, 0.2); }
+        .ref-checkbox input { display: none; }
+        
+        .ref-indicator {
+            display: inline-flex; align-items: center; gap: 4px; 
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+            padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-right: 6px;
+        }
+
+        .quick-ref-btn {
+            padding: 4px 8px; font-size: 11px; border-radius: 6px;
+            background: var(--bg-tertiary); border: 1px solid var(--border-color);
+            cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;
+        }
+        .quick-ref-btn:hover { background: var(--accent-color); border-color: var(--accent-color); }
+        .quick-ref-btn.active { background: var(--accent-color); border-color: var(--accent-color); }
+
+        .search-btn {
+            padding: 4px 8px; font-size: 11px; border-radius: 6px;
+            background: var(--bg-tertiary); border: 1px solid var(--border-color);
+            cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;
+        }
+        .search-btn:hover { background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-color: #3b82f6; }
+        .search-btn.active { background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-color: #3b82f6; }
+
+        .image-gen-btn {
+            padding: 4px 8px; font-size: 11px; border-radius: 6px;
+            background: var(--bg-tertiary); border: 1px solid var(--border-color);
+            cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;
+        }
+        .image-gen-btn:hover { background: linear-gradient(135deg, #ec4899, #db2777); border-color: #ec4899; }
+        .image-gen-btn.active { background: linear-gradient(135deg, #ec4899, #db2777); border-color: #ec4899; }
+
+        /* 快捷键提示样式 */
+        .shortcut-key {
+            display: inline-flex; align-items: center; justify-content: center;
+            background: var(--bg-primary); border: 1px solid var(--border-color);
+            border-radius: 6px; padding: 4px 10px; font-size: 12px; font-family: monospace;
+            min-width: 60px; text-align: center;
+        }
+        .shortcut-input {
+            background: var(--bg-tertiary); border: 1px solid var(--border-color);
+            border-radius: 6px; padding: 6px 12px; font-size: 12px; font-family: monospace;
+            color: var(--text-primary); text-align: center; width: 120px; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .shortcut-input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3); }
+        .shortcut-input.recording { background: var(--accent-color); color: white; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        
+        /* 快捷键开关样式 */
+        .shortcut-toggle {
+            position: relative; width: 44px; height: 24px; background: var(--bg-tertiary);
+            border-radius: 12px; cursor: pointer; transition: all 0.3s;
+            border: 1px solid var(--border-color);
+        }
+        .shortcut-toggle.active { background: var(--accent-color); border-color: var(--accent-color); }
+        .shortcut-toggle::after {
+            content: ''; position: absolute; width: 18px; height: 18px;
+            background: white; border-radius: 50%; top: 2px; left: 2px;
+            transition: all 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .shortcut-toggle.active::after { left: 22px; }
+        
+        /* 模型选择按钮样式 */
+        .send-target-btn {
+            opacity: 0.4;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .send-target-btn:hover { opacity: 0.7; }
+        .send-target-btn.active {
+            opacity: 1;
+            border-color: var(--accent-color);
+            background: rgba(139, 92, 246, 0.2);
+        }
+    </style>
+</head>
+<body class="theme-dark min-h-screen">
+    <!-- 节日装饰容器 -->
+    <div id="themeDecorContainer" class="theme-decor-container"></div>
+    
+    <div class="flex h-screen overflow-hidden relative z-10">
+        <!-- 左侧历史记录侧边栏 -->
+        <div id="sidebarWrapper" class="sidebar-wrapper bg-themed-secondary border-r border-themed">
+            <div class="sidebar-inner">
+                <div class="p-4 border-b border-themed flex items-center justify-between">
+                    <h1 class="text-sm font-bold flex items-center gap-2">
+                        <i class="ri-chat-history-line text-purple-400"></i>
+                        对话历史
+                    </h1>
+                    <button onclick="toggleSidebar()" class="p-1.5 hover:bg-themed-tertiary rounded-lg transition">
+                        <i class="ri-arrow-left-s-line"></i>
+                    </button>
+                </div>
+                
+                <div class="p-3">
+                    <button onclick="newChat()" class="w-full btn-primary rounded-lg py-2.5 text-sm font-medium transition flex items-center justify-center gap-2">
+                        <i class="ri-add-line"></i>新对话
+                    </button>
+                </div>
+                
+                <div id="historyList" class="flex-1 overflow-y-auto p-3 space-y-2 sidebar"></div>
+                
+                <div class="p-3 border-t border-themed">
+                    <button onclick="clearAllHistory()" class="w-full text-red-400 hover:bg-red-600/20 rounded-lg py-2 text-sm font-medium transition flex items-center justify-center gap-2">
+                        <i class="ri-delete-bin-line"></i>清空历史
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- 顶部栏 -->
+            <div class="h-12 bg-themed-secondary border-b border-themed flex items-center justify-between px-4 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <button id="sidebarToggleBtn" onclick="toggleSidebar()" class="p-2 hover:bg-themed-tertiary rounded-lg transition">
+                        <i class="ri-menu-line text-lg"></i>
+                    </button>
+                    <h1 class="text-base font-bold flex items-center gap-2">
+                        <i class="ri-robot-2-line text-purple-400"></i>
+                        <span class="hidden sm:inline">AI 协同工作台</span>
+                    </h1>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="stopAllBtn" onclick="stopAllResponses()" class="hidden stop-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                        <i class="ri-stop-fill"></i>
+                        <span class="hidden sm:inline">全部停止</span>
+                    </button>
+                    <div class="flex items-center gap-1 bg-themed-tertiary rounded-lg px-2 py-1">
+                        <input type="file" id="sharedBgInput" accept="image/*" class="hidden" onchange="setSharedBg(this)">
+                        <button onclick="document.getElementById('sharedBgInput').click()" class="p-1.5 hover:bg-themed-secondary rounded transition" title="上传共用背景">
+                            <i class="ri-image-add-line text-sm"></i>
+                        </button>
+                        <button id="sharedBgToggle" onclick="toggleSharedBg()" class="p-1.5 hover:bg-themed-secondary rounded transition flex items-center gap-1" title="切换共用背景">
+                            <i class="ri-layout-column-line text-sm"></i>
+                            <span class="text-xs hidden sm:inline">共用背景</span>
+                            <span id="sharedBgStatus" class="text-xs text-themed-secondary">关</span>
+                        </button>
+                    </div>
+                    <button onclick="openSettings()" class="p-2 hover:bg-themed-tertiary rounded-lg transition flex items-center gap-2">
+                        <i class="ri-settings-3-line text-lg"></i>
+                        <span class="hidden sm:inline text-sm">设置</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 三栏对话 -->
+            <div class="flex-1 flex overflow-hidden">
+                <!-- 模型1对话栏 -->
+                <div class="flex-1 flex flex-col border-r border-themed min-w-0">
+                    <div class="p-2 border-b border-themed flex items-center justify-between bg-themed-secondary flex-shrink-0">
+                        <div class="model-dropdown flex-1 min-w-0 mr-2">
+                            <div onclick="toggleModelDropdown(1)" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition px-2 py-1 rounded-lg hover:bg-themed-tertiary">
+                                <span class="w-2.5 h-2.5 rounded-full bg-green-500 flex-shrink-0"></span>
+                                <span id="modelLabel1" class="font-medium text-sm truncate">gpt-4o</span>
+                                <i class="ri-arrow-down-s-line text-themed-secondary"></i>
+                            </div>
+                            <div id="modelDropdown1" class="model-dropdown-menu"></div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="stopBtn1" onclick="stopResponse(1)" class="hidden stop-btn p-1.5 rounded-lg text-xs transition" title="停止生成">
+                                <i class="ri-stop-fill"></i>
+                            </button>
+                            <span id="status1" class="text-xs text-themed-secondary flex-shrink-0 px-2 py-1 rounded-full bg-themed-tertiary">就绪</span>
+                        </div>
+                    </div>
+                    <div id="chat1" class="flex-1 overflow-y-auto p-4 space-y-4 chat-container chat-bg" style="background-color: var(--bg-primary);">
+                        <div class="text-center text-themed-secondary text-sm py-8">
+                            <i class="ri-chat-3-line text-3xl mb-2 block opacity-50"></i>开始对话...
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <button onclick="toggleMiniInput(1)" class="mini-input-toggle" id="miniToggle1">
+                            <i class="ri-arrow-up-s-line" id="miniToggleIcon1"></i>
+                            <span>输入</span>
+                        </button>
+                        <div class="mini-input-area" id="miniInputArea1">
+                            <!-- 跨域分析面板 -->
+                            <div id="crossPanel1" class="cross-analyze-panel">
+                                <div class="text-xs font-medium mb-2 flex items-center gap-2">
+                                    <i class="ri-git-merge-line text-purple-400"></i>
+                                    引用其他模型对话进行分析
+                                </div>
+                                <div class="flex gap-2 mb-2">
+                                    <label class="ref-checkbox flex-1" id="refCheck1_2">
+                                        <input type="checkbox" onchange="toggleRef(1, 2)">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                                        <span class="text-xs">模型 2</span>
+                                    </label>
+                                    <label class="ref-checkbox flex-1" id="refCheck1_3">
+                                        <input type="checkbox" onchange="toggleRef(1, 3)">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                                        <span class="text-xs">模型 3</span>
+                                    </label>
+                                </div>
+                                <div class="text-xs text-themed-secondary">勾选后发送的消息将包含所选模型的对话内容</div>
+                            </div>
+                            <div id="filePreview1" class="file-preview mb-1 hidden"></div>
+                            <div class="flex gap-2 items-center mb-1">
+                                <button onclick="toggleCrossPanel(1)" class="quick-ref-btn" id="crossBtn1" title="跨域分析">
+                                    <i class="ri-git-merge-line"></i>
+                                    <span>引用</span>
+                                </button>
+                                <button onclick="toggleWebSearch(1)" class="search-btn" id="searchBtn1" title="联网搜索">
+                                    <i class="ri-global-line"></i>
+                                    <span>联网</span>
+                                </button>
+                                <button onclick="toggleImageGen(1)" class="image-gen-btn" id="imageGenBtn1" title="生图模式">
+                                    <i class="ri-image-add-line"></i>
+                                    <span>生图</span>
+                                </button>
+                                <div id="refIndicator1" class="hidden"></div>
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="file" id="fileInput1" multiple class="hidden" onchange="handleFileSelect(1, this)">
+                                <button onclick="document.getElementById('fileInput1').click()" class="p-1.5 btn-secondary rounded-lg" title="上传文件">
+                                    <i class="ri-attachment-2 text-sm"></i>
+                                </button>
+                                <textarea id="miniInput1" class="mini-input flex-1" rows="1" placeholder="Enter发送..." onkeydown="handleMiniKeyDown(event, 1)"></textarea>
+                                <button onclick="sendToSingle(1)" class="p-1.5 btn-primary rounded-lg">
+                                    <i class="ri-send-plane-fill text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模型2对话栏 -->
+                <div class="flex-1 flex flex-col border-r border-themed min-w-0">
+                    <div class="p-2 border-b border-themed flex items-center justify-between bg-themed-secondary flex-shrink-0">
+                        <div class="model-dropdown flex-1 min-w-0 mr-2">
+                            <div onclick="toggleModelDropdown(2)" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition px-2 py-1 rounded-lg hover:bg-themed-tertiary">
+                                <span class="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0"></span>
+                                <span id="modelLabel2" class="font-medium text-sm truncate">claude-sonnet-4</span>
+                                <i class="ri-arrow-down-s-line text-themed-secondary"></i>
+                            </div>
+                            <div id="modelDropdown2" class="model-dropdown-menu"></div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="stopBtn2" onclick="stopResponse(2)" class="hidden stop-btn p-1.5 rounded-lg text-xs transition" title="停止生成">
+                                <i class="ri-stop-fill"></i>
+                            </button>
+                            <span id="status2" class="text-xs text-themed-secondary flex-shrink-0 px-2 py-1 rounded-full bg-themed-tertiary">就绪</span>
+                        </div>
+                    </div>
+                    <div id="chat2" class="flex-1 overflow-y-auto p-4 space-y-4 chat-container chat-bg" style="background-color: var(--bg-primary);">
+                        <div class="text-center text-themed-secondary text-sm py-8">
+                            <i class="ri-chat-3-line text-3xl mb-2 block opacity-50"></i>开始对话...
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <button onclick="toggleMiniInput(2)" class="mini-input-toggle" id="miniToggle2">
+                            <i class="ri-arrow-up-s-line" id="miniToggleIcon2"></i>
+                            <span>输入</span>
+                        </button>
+                        <div class="mini-input-area" id="miniInputArea2">
+                            <!-- 跨域分析面板 -->
+                            <div id="crossPanel2" class="cross-analyze-panel">
+                                <div class="text-xs font-medium mb-2 flex items-center gap-2">
+                                    <i class="ri-git-merge-line text-purple-400"></i>
+                                    引用其他模型对话进行分析
+                                </div>
+                                <div class="flex gap-2 mb-2">
+                                    <label class="ref-checkbox flex-1" id="refCheck2_1">
+                                        <input type="checkbox" onchange="toggleRef(2, 1)">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                                        <span class="text-xs">模型 1</span>
+                                    </label>
+                                    <label class="ref-checkbox flex-1" id="refCheck2_3">
+                                        <input type="checkbox" onchange="toggleRef(2, 3)">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                                        <span class="text-xs">模型 3</span>
+                                    </label>
+                                </div>
+                                <div class="text-xs text-themed-secondary">勾选后发送的消息将包含所选模型的对话内容</div>
+                            </div>
+                            <div id="filePreview2" class="file-preview mb-1 hidden"></div>
+                            <div class="flex gap-2 items-center mb-1">
+                                <button onclick="toggleCrossPanel(2)" class="quick-ref-btn" id="crossBtn2" title="跨域分析">
+                                    <i class="ri-git-merge-line"></i>
+                                    <span>引用</span>
+                                </button>
+                                <button onclick="toggleWebSearch(2)" class="search-btn" id="searchBtn2" title="联网搜索">
+                                    <i class="ri-global-line"></i>
+                                    <span>联网</span>
+                                </button>
+                                <button onclick="toggleImageGen(2)" class="image-gen-btn" id="imageGenBtn2" title="生图模式">
+                                    <i class="ri-image-add-line"></i>
+                                    <span>生图</span>
+                                </button>
+                                <div id="refIndicator2" class="hidden"></div>
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="file" id="fileInput2" multiple class="hidden" onchange="handleFileSelect(2, this)">
+                                <button onclick="document.getElementById('fileInput2').click()" class="p-1.5 btn-secondary rounded-lg" title="上传文件">
+                                    <i class="ri-attachment-2 text-sm"></i>
+                                </button>
+                                <textarea id="miniInput2" class="mini-input flex-1" rows="1" placeholder="Enter发送..." onkeydown="handleMiniKeyDown(event, 2)"></textarea>
+                                <button onclick="sendToSingle(2)" class="p-1.5 btn-primary rounded-lg">
+                                    <i class="ri-send-plane-fill text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模型3对话栏 -->
+                <div class="flex-1 flex flex-col min-w-0">
+                    <div class="p-2 border-b border-themed flex items-center justify-between bg-themed-secondary flex-shrink-0">
+                        <div class="model-dropdown flex-1 min-w-0 mr-2">
+                            <div onclick="toggleModelDropdown(3)" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition px-2 py-1 rounded-lg hover:bg-themed-tertiary">
+                                <span class="w-2.5 h-2.5 rounded-full bg-orange-500 flex-shrink-0"></span>
+                                <span id="modelLabel3" class="font-medium text-sm truncate">deepseek-chat</span>
+                                <i class="ri-arrow-down-s-line text-themed-secondary"></i>
+                            </div>
+                            <div id="modelDropdown3" class="model-dropdown-menu"></div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="stopBtn3" onclick="stopResponse(3)" class="hidden stop-btn p-1.5 rounded-lg text-xs transition" title="停止生成">
+                                <i class="ri-stop-fill"></i>
+                            </button>
+                            <span id="status3" class="text-xs text-themed-secondary flex-shrink-0 px-2 py-1 rounded-full bg-themed-tertiary">就绪</span>
+                        </div>
+                    </div>
+                    <div id="chat3" class="flex-1 overflow-y-auto p-4 space-y-4 chat-container chat-bg" style="background-color: var(--bg-primary);">
+                        <div class="text-center text-themed-secondary text-sm py-8">
+                            <i class="ri-chat-3-line text-3xl mb-2 block opacity-50"></i>开始对话...
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <button onclick="toggleMiniInput(3)" class="mini-input-toggle" id="miniToggle3">
+                            <i class="ri-arrow-up-s-line" id="miniToggleIcon3"></i>
+                            <span>输入</span>
+                        </button>
+                        <div class="mini-input-area" id="miniInputArea3">
+                            <!-- 跨域分析面板 -->
+                            <div id="crossPanel3" class="cross-analyze-panel">
+                                <div class="text-xs font-medium mb-2 flex items-center gap-2">
+                                    <i class="ri-git-merge-line text-purple-400"></i>
+                                    引用其他模型对话进行分析
+                                </div>
+                                <div class="flex gap-2 mb-2">
+                                    <label class="ref-checkbox flex-1" id="refCheck3_1">
+                                        <input type="checkbox" onchange="toggleRef(3, 1)">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                                        <span class="text-xs">模型 1</span>
+                                    </label>
+                                    <label class="ref-checkbox flex-1" id="refCheck3_2">
+                                        <input type="checkbox" onchange="toggleRef(3, 2)">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                                        <span class="text-xs">模型 2</span>
+                                    </label>
+                                </div>
+                                <div class="text-xs text-themed-secondary">勾选后发送的消息将包含所选模型的对话内容</div>
+                            </div>
+                            <div id="filePreview3" class="file-preview mb-1 hidden"></div>
+                            <div class="flex gap-2 items-center mb-1">
+                                <button onclick="toggleCrossPanel(3)" class="quick-ref-btn" id="crossBtn3" title="跨域分析">
+                                    <i class="ri-git-merge-line"></i>
+                                    <span>引用</span>
+                                </button>
+                                <button onclick="toggleWebSearch(3)" class="search-btn" id="searchBtn3" title="联网搜索">
+                                    <i class="ri-global-line"></i>
+                                    <span>联网</span>
+                                </button>
+                                <button onclick="toggleImageGen(3)" class="image-gen-btn" id="imageGenBtn3" title="生图模式">
+                                    <i class="ri-image-add-line"></i>
+                                    <span>生图</span>
+                                </button>
+                                <div id="refIndicator3" class="hidden"></div>
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="file" id="fileInput3" multiple class="hidden" onchange="handleFileSelect(3, this)">
+                                <button onclick="document.getElementById('fileInput3').click()" class="p-1.5 btn-secondary rounded-lg" title="上传文件">
+                                    <i class="ri-attachment-2 text-sm"></i>
+                                </button>
+                                <textarea id="miniInput3" class="mini-input flex-1" rows="1" placeholder="Enter发送..." onkeydown="handleMiniKeyDown(event, 3)"></textarea>
+                                <button onclick="sendToSingle(3)" class="p-1.5 btn-primary rounded-lg">
+                                    <i class="ri-send-plane-fill text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 统一输入区 -->
+            <div class="p-2 bg-themed-secondary border-t border-themed flex-shrink-0">
+                <div id="globalFilePreview" class="file-preview mb-1 hidden px-1"></div>
+                <div class="flex gap-2 items-center">
+                    <!-- 模型选择按钮组 -->
+                    <div class="flex items-center gap-1 bg-themed-tertiary rounded-lg p-1 flex-shrink-0">
+                        <button onclick="toggleSendTarget(1)" id="sendTarget1" class="send-target-btn active w-7 h-7 rounded flex items-center justify-center text-xs font-bold" title="发送给模型1">
+                            <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                        </button>
+                        <button onclick="toggleSendTarget(2)" id="sendTarget2" class="send-target-btn active w-7 h-7 rounded flex items-center justify-center text-xs font-bold" title="发送给模型2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                        </button>
+                        <button onclick="toggleSendTarget(3)" id="sendTarget3" class="send-target-btn active w-7 h-7 rounded flex items-center justify-center text-xs font-bold" title="发送给模型3">
+                            <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                        </button>
+                    </div>
+                    <input type="file" id="globalFileInput" multiple class="hidden" onchange="handleGlobalFileSelect(this)">
+                    <button onclick="document.getElementById('globalFileInput').click()" class="p-2 btn-secondary rounded-lg flex-shrink-0" title="上传文件/图片">
+                        <i class="ri-attachment-2"></i>
+                    </button>
+                    <button onclick="toggleGlobalWebSearch()" id="globalSearchBtn" class="p-2 btn-secondary rounded-lg flex-shrink-0" title="联网搜索（所有模型）">
+                        <i class="ri-global-line" id="globalSearchIcon"></i>
+                    </button>
+                    <button onclick="toggleAllMiniInputs()" id="toggleAllMiniBtn" class="p-2 btn-secondary rounded-lg flex-shrink-0" title="显示/隐藏独立输入框">
+                        <i class="ri-layout-row-line" id="toggleAllMiniIcon"></i>
+                    </button>
+                    <textarea id="userInput" 
+                        placeholder="发送给选中的AI模型... (Enter发送)" 
+                        rows="1"
+                        class="flex-1 input-themed rounded-lg px-3 py-2 resize-none focus:outline-none border" 
+                        onkeydown="handleKeyDown(event)"></textarea>
+                    <button onclick="sendToSelected()" id="sendBtn"
+                        class="btn-primary rounded-lg px-4 py-2 text-sm font-medium transition flex items-center gap-2 disabled:opacity-50 flex-shrink-0">
+                        <i class="ri-send-plane-fill"></i>
+                        <span class="hidden sm:inline">发送</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div id="settingsModal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div class="modal-content bg-themed-secondary rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col mx-4 border border-themed">
+            <div class="p-4 border-b border-themed flex items-center justify-between flex-shrink-0">
+                <h2 class="text-lg font-bold flex items-center gap-2">
+                    <i class="ri-settings-3-line text-purple-400"></i>设置中心
+                </h2>
+                <button onclick="closeSettings()" class="p-2 hover:bg-themed-tertiary rounded-lg transition">
+                    <i class="ri-close-line text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="settings-content flex-1 overflow-y-auto p-5 space-y-6">
+                <!-- 主题设置 -->
+                <div class="space-y-4">
+                    <div class="section-title"><i class="ri-palette-line"></i>主题风格</div>
+                    <div class="grid grid-cols-4 md:grid-cols-8 gap-3">
+                        <div onclick="setTheme('dark')" class="theme-card bg-gray-900" data-theme="dark">
+                            <div class="text-lg mb-1">🌙</div>
+                            <div class="text-xs">深邃</div>
+                        </div>
+                        <div onclick="setTheme('spring')" class="theme-card bg-red-950" data-theme="spring">
+                            <div class="text-lg mb-1">🧧</div>
+                            <div class="text-xs">春节</div>
+                        </div>
+                        <div onclick="setTheme('christmas')" class="theme-card bg-green-950" data-theme="christmas">
+                            <div class="text-lg mb-1">🎄</div>
+                            <div class="text-xs">圣诞</div>
+                        </div>
+                        <div onclick="setTheme('halloween')" class="theme-card bg-orange-950" data-theme="halloween">
+                            <div class="text-lg mb-1">🎃</div>
+                            <div class="text-xs">万圣节</div>
+                        </div>
+                        <div onclick="setTheme('valentine')" class="theme-card bg-pink-950" data-theme="valentine">
+                            <div class="text-lg mb-1">💕</div>
+                            <div class="text-xs">情人节</div>
+                        </div>
+                        <div onclick="setTheme('midautumn')" class="theme-card bg-amber-950" data-theme="midautumn">
+                            <div class="text-lg mb-1">🥮</div>
+                            <div class="text-xs">中秋</div>
+                        </div>
+                        <div onclick="setTheme('sakura')" class="theme-card bg-fuchsia-950" data-theme="sakura">
+                            <div class="text-lg mb-1">🌸</div>
+                            <div class="text-xs">樱花</div>
+                        </div>
+                        <div onclick="setTheme('ocean')" class="theme-card bg-blue-950" data-theme="ocean">
+                            <div class="text-lg mb-1">🌊</div>
+                            <div class="text-xs">海洋</div>
+                        </div>
+                        <div onclick="setTheme('light')" class="theme-card bg-gray-100 text-gray-800" data-theme="light">
+                            <div class="text-lg mb-1">☀️</div>
+                            <div class="text-xs">明亮</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 字体设置 -->
+                <div class="space-y-4">
+                    <div class="section-title"><i class="ri-font-size-2"></i>字体大小</div>
+                    <div class="card p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-sm">AI 回复字体</span>
+                            <span id="fontSizeValue" class="text-sm font-mono bg-themed-tertiary px-3 py-1 rounded-lg">14px</span>
+                        </div>
+                        <input type="range" id="fontSizeSlider" min="12" max="24" value="14" 
+                            class="w-full" onchange="setFontSize(this.value)" oninput="updateFontSizeLabel(this.value)">
+                        <div class="flex justify-between text-xs text-themed-secondary mt-2">
+                            <span>12px</span><span>24px</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 快捷键设置 -->
+                <div class="space-y-4">
+                    <div class="section-title"><i class="ri-keyboard-line"></i>快捷键设置</div>
+                    <div class="card p-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i class="ri-settings-3-line text-themed-secondary"></i>
+                                    <span class="text-sm">打开设置</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" class="shortcut-input" id="shortcut_settings" 
+                                        value="Ctrl+," readonly onclick="startRecordShortcut('settings')" title="点击修改">
+                                    <div class="shortcut-toggle active" id="toggle_settings" onclick="toggleShortcutEnabled('settings')"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i class="ri-image-line text-themed-secondary"></i>
+                                    <span class="text-sm">切换共用背景</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" class="shortcut-input" id="shortcut_sharedBg" 
+                                        value="Ctrl+B" readonly onclick="startRecordShortcut('sharedBg')" title="点击修改">
+                                    <div class="shortcut-toggle active" id="toggle_sharedBg" onclick="toggleShortcutEnabled('sharedBg')"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i class="ri-side-bar-line text-themed-secondary"></i>
+                                    <span class="text-sm">打开/关闭侧边栏</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" class="shortcut-input" id="shortcut_sidebar" 
+                                        value="Ctrl+\\" readonly onclick="startRecordShortcut('sidebar')" title="点击修改">
+                                    <div class="shortcut-toggle active" id="toggle_sidebar" onclick="toggleShortcutEnabled('sidebar')"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i class="ri-layout-row-line text-themed-secondary"></i>
+                                    <span class="text-sm">显示/隐藏输入框</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" class="shortcut-input" id="shortcut_toggleInputs" 
+                                        value="Ctrl+I" readonly onclick="startRecordShortcut('toggleInputs')" title="点击修改">
+                                    <div class="shortcut-toggle active" id="toggle_toggleInputs" onclick="toggleShortcutEnabled('toggleInputs')"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i class="ri-subtract-line text-themed-secondary"></i>
+                                    <span class="text-sm">最小化/恢复应用</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" class="shortcut-input" id="shortcut_minimize" 
+                                        value="Ctrl+M" readonly onclick="startRecordShortcut('minimize')" title="点击修改">
+                                    <div class="shortcut-toggle active" id="toggle_minimize" onclick="toggleShortcutEnabled('minimize')"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-themed-secondary mt-3">点击输入框后按下新的快捷键组合来修改，点击开关启用/禁用。最小化快捷键仅在桌面应用中生效。</p>
+                    </div>
+                </div>
+
+                <!-- AI消息气泡背景色设置 -->
+                <div class="space-y-4">
+                    <div class="section-title"><i class="ri-chat-4-line"></i>AI 消息气泡背景</div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="card p-4 space-y-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                                <span class="text-sm font-medium">模型 1</span>
+                            </div>
+                            <div class="flex gap-2 flex-wrap">
+                                <div class="color-option selected" style="background: #1e3a5f;" data-color="#1e3a5f" onclick="setMsgBg(1, '#1e3a5f')"></div>
+                                <div class="color-option" style="background: #1a332a;" data-color="#1a332a" onclick="setMsgBg(1, '#1a332a')"></div>
+                                <div class="color-option" style="background: #2d2a1e;" data-color="#2d2a1e" onclick="setMsgBg(1, '#2d2a1e')"></div>
+                                <div class="color-option" style="background: #2a1e2d;" data-color="#2a1e2d" onclick="setMsgBg(1, '#2a1e2d')"></div>
+                                <div class="color-option" style="background: #1e2d3a;" data-color="#1e2d3a" onclick="setMsgBg(1, '#1e2d3a')"></div>
+                                <div class="color-option" style="background: #2d1e1e;" data-color="#2d1e1e" onclick="setMsgBg(1, '#2d1e1e')"></div>
+                                <input type="color" id="msgColor1" value="#1e3a5f" class="w-7 h-7 rounded-lg cursor-pointer border-0" onchange="setMsgBg(1, this.value)" title="自定义">
+                            </div>
+                        </div>
+                        <div class="card p-4 space-y-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                                <span class="text-sm font-medium">模型 2</span>
+                            </div>
+                            <div class="flex gap-2 flex-wrap">
+                                <div class="color-option" style="background: #1e3a5f;" data-color="#1e3a5f" onclick="setMsgBg(2, '#1e3a5f')"></div>
+                                <div class="color-option selected" style="background: #1a332a;" data-color="#1a332a" onclick="setMsgBg(2, '#1a332a')"></div>
+                                <div class="color-option" style="background: #2d2a1e;" data-color="#2d2a1e" onclick="setMsgBg(2, '#2d2a1e')"></div>
+                                <div class="color-option" style="background: #2a1e2d;" data-color="#2a1e2d" onclick="setMsgBg(2, '#2a1e2d')"></div>
+                                <div class="color-option" style="background: #1e2d3a;" data-color="#1e2d3a" onclick="setMsgBg(2, '#1e2d3a')"></div>
+                                <div class="color-option" style="background: #2d1e1e;" data-color="#2d1e1e" onclick="setMsgBg(2, '#2d1e1e')"></div>
+                                <input type="color" id="msgColor2" value="#1a332a" class="w-7 h-7 rounded-lg cursor-pointer border-0" onchange="setMsgBg(2, this.value)" title="自定义">
+                            </div>
+                        </div>
+                        <div class="card p-4 space-y-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-orange-500"></span>
+                                <span class="text-sm font-medium">模型 3</span>
+                            </div>
+                            <div class="flex gap-2 flex-wrap">
+                                <div class="color-option" style="background: #1e3a5f;" data-color="#1e3a5f" onclick="setMsgBg(3, '#1e3a5f')"></div>
+                                <div class="color-option" style="background: #1a332a;" data-color="#1a332a" onclick="setMsgBg(3, '#1a332a')"></div>
+                                <div class="color-option selected" style="background: #2d2a1e;" data-color="#2d2a1e" onclick="setMsgBg(3, '#2d2a1e')"></div>
+                                <div class="color-option" style="background: #2a1e2d;" data-color="#2a1e2d" onclick="setMsgBg(3, '#2a1e2d')"></div>
+                                <div class="color-option" style="background: #1e2d3a;" data-color="#1e2d3a" onclick="setMsgBg(3, '#1e2d3a')"></div>
+                                <div class="color-option" style="background: #2d1e1e;" data-color="#2d1e1e" onclick="setMsgBg(3, '#2d1e1e')"></div>
+                                <input type="color" id="msgColor3" value="#2d2a1e" class="w-7 h-7 rounded-lg cursor-pointer border-0" onchange="setMsgBg(3, this.value)" title="自定义">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI栏背景设置 -->
+                <div class="space-y-4">
+                    <div class="section-title"><i class="ri-image-line"></i>AI对话栏背景</div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="card p-4 space-y-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                                <span class="text-sm font-medium">模型 1</span>
+                            </div>
+                            <div class="flex gap-2 flex-wrap">
+                                <div class="color-option selected" style="background: #111827;" data-color="#111827" onclick="setChatBg(1, '#111827')"></div>
+                                <div class="color-option" style="background: #1e3a5f;" data-color="#1e3a5f" onclick="setChatBg(1, '#1e3a5f')"></div>
+                                <div class="color-option" style="background: #1a332a;" data-color="#1a332a" onclick="setChatBg(1, '#1a332a')"></div>
+                                <div class="color-option" style="background: #2d2a1e;" data-color="#2d2a1e" onclick="setChatBg(1, '#2d2a1e')"></div>
+                                <div class="color-option" style="background: #2a1e2d;" data-color="#2a1e2d" onclick="setChatBg(1, '#2a1e2d')"></div>
+                                <input type="color" id="customColor1" value="#111827" class="w-7 h-7 rounded-lg cursor-pointer border-0" onchange="setChatBg(1, this.value)" title="自定义">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="file" id="bgImage1" accept="image/*" class="hidden" onchange="setChatBgImage(1, this)">
+                                <button onclick="document.getElementById('bgImage1').click()" class="flex-1 text-xs btn-secondary px-3 py-2 rounded-lg">
+                                    <i class="ri-image-add-line mr-1"></i>背景图
+                                </button>
+                                <button onclick="clearChatBgImage(1)" class="text-xs btn-secondary px-3 py-2 rounded-lg text-red-400 hover:text-red-300">
+                                    <i class="ri-delete-bin-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card p-4 space-y-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                                <span class="text-sm font-medium">模型 2</span>
+                            </div>
+                            <div class="flex gap-2 flex-wrap">
+                                <div class="color-option selected" style="background: #111827;" data-color="#111827" onclick="setChatBg(2, '#111827')"></div>
+                                <div class="color-option" style="background: #1e3a5f;" data-color="#1e3a5f" onclick="setChatBg(2, '#1e3a5f')"></div>
+                                <div class="color-option" style="background: #1a332a;" data-color="#1a332a" onclick="setChatBg(2, '#1a332a')"></div>
+                                <div class="color-option" style="background: #2d2a1e;" data-color="#2d2a1e" onclick="setChatBg(2, '#2d2a1e')"></div>
+                                <div class="color-option" style="background: #2a1e2d;" data-color="#2a1e2d" onclick="setChatBg(2, '#2a1e2d')"></div>
+                                <input type="color" id="customColor2" value="#111827" class="w-7 h-7 rounded-lg cursor-pointer border-0" onchange="setChatBg(2, this.value)" title="自定义">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="file" id="bgImage2" accept="image/*" class="hidden" onchange="setChatBgImage(2, this)">
+                                <button onclick="document.getElementById('bgImage2').click()" class="flex-1 text-xs btn-secondary px-3 py-2 rounded-lg">
+                                    <i class="ri-image-add-line mr-1"></i>背景图
+                                </button>
+                                <button onclick="clearChatBgImage(2)" class="text-xs btn-secondary px-3 py-2 rounded-lg text-red-400 hover:text-red-300">
+                                    <i class="ri-delete-bin-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card p-4 space-y-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-orange-500"></span>
+                                <span class="text-sm font-medium">模型 3</span>
+                            </div>
+                            <div class="flex gap-2 flex-wrap">
+                                <div class="color-option selected" style="background: #111827;" data-color="#111827" onclick="setChatBg(3, '#111827')"></div>
+                                <div class="color-option" style="background: #1e3a5f;" data-color="#1e3a5f" onclick="setChatBg(3, '#1e3a5f')"></div>
+                                <div class="color-option" style="background: #1a332a;" data-color="#1a332a" onclick="setChatBg(3, '#1a332a')"></div>
+                                <div class="color-option" style="background: #2d2a1e;" data-color="#2d2a1e" onclick="setChatBg(3, '#2d2a1e')"></div>
+                                <div class="color-option" style="background: #2a1e2d;" data-color="#2a1e2d" onclick="setChatBg(3, '#2a1e2d')"></div>
+                                <input type="color" id="customColor3" value="#111827" class="w-7 h-7 rounded-lg cursor-pointer border-0" onchange="setChatBg(3, this.value)" title="自定义">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="file" id="bgImage3" accept="image/*" class="hidden" onchange="setChatBgImage(3, this)">
+                                <button onclick="document.getElementById('bgImage3').click()" class="flex-1 text-xs btn-secondary px-3 py-2 rounded-lg">
+                                    <i class="ri-image-add-line mr-1"></i>背景图
+                                </button>
+                                <button onclick="clearChatBgImage(3)" class="text-xs btn-secondary px-3 py-2 rounded-lg text-red-400 hover:text-red-300">
+                                    <i class="ri-delete-bin-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API 配置区 -->
+                <div class="space-y-4">
+                    <div class="section-title"><i class="ri-key-2-line"></i>API 配置</div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <!-- 服务商1 -->
+                        <div class="card p-4 space-y-3">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                                <span class="font-medium">模型 1</span>
+                            </div>
+                            <select id="provider1" onchange="onProviderChange(1)" class="w-full input-themed text-sm rounded-lg px-3 py-2 border">
+                                <option value="openai">OpenAI</option>
+                                <option value="anthropic">Anthropic</option>
+                                <option value="google">Google</option>
+                                <option value="deepseek">DeepSeek</option>
+                                <option value="qwen">通义千问</option>
+                                <option value="zhipu">智谱AI</option>
+                                <option value="siliconflow">硅基流动</option>
+                                <option value="doubao">字节豆包</option>
+                                <option value="openrouter">OpenRouter</option>
+                                <option value="custom">自定义</option>
+                            </select>
+                            <input type="password" id="apiKey1" placeholder="API Key" class="w-full input-themed rounded-lg px-3 py-2 text-sm border">
+                            <input type="text" id="baseUrl1" placeholder="Base URL" class="w-full input-themed rounded-lg px-3 py-2 text-sm border">
+                            <select id="model1" class="w-full input-themed rounded-lg px-3 py-2 text-sm border">
+                                <option value="gpt-4o">gpt-4o</option>
+                            </select>
+                            <input type="text" id="modelCustom1" placeholder="手动输入模型名称" class="hidden w-full input-themed rounded-lg px-3 py-2 text-sm border">
+                            <div class="flex gap-2">
+                                <button onclick="fetchModels(1)" id="fetchBtn1" class="flex-1 btn-primary rounded-lg py-2 text-sm font-medium">
+                                    <i class="ri-refresh-line mr-1"></i>获取模型
+                                </button>
+                                <button onclick="testConnection(1)" id="testBtn1" class="flex-1 btn-secondary rounded-lg py-2 text-sm font-medium">
+                                    <i class="ri-link mr-1"></i>测试
+                                </button>
+                            </div>
+                            <div id="testResult1" class="text-xs hidden p-2 rounded-lg"></div>
+                        </div>
+
+                        <!-- 服务商2 -->
+                        <div class="card p-4 space-y-3">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                                <span class="font-medium">模型 2</span>
+                            </div>
+                            <select id="provider2" onchange="onProviderChange(2)" class="w-full input-themed text-sm rounded-lg px-3 py-2 border">
+                                <option value="anthropic">Anthropic</option>
+                                <option value="openai">OpenAI</option>
+                                <option value="google">Google</option>
+                                <option value="deepseek">DeepSeek</option>
+                                <option value="qwen">通义千问</option>
+                                <option value="zhipu">智谱AI</option>
+                                <option value="siliconflow">硅基流动</option>
+                                <option value="doubao">字节豆包</option>
+                                <option value="openrouter">OpenRouter</option>
+                                <option value="custom">自定义</option>
+                            </select>
+                            <input type="password" id="apiKey2" placeholder="API Key" class="w-full input-themed rounded-lg px-3 py-2 text-sm border">
+                            <input type="text" id="baseUrl2" placeholder="Base URL" class="w-full input-themed rounded-lg px-3 py-2 text-sm border">
+                            <select id="model2" class="w-full input-themed rounded-lg px-3 py-2 text-sm border">
+                                <option value="claude-sonnet-4-20250514">claude-sonnet-4</option>
+                            </select>
+                            <input type="text" id="modelCustom2" placeholder="手动输入模型名称" class="hidden w-full input-themed rounded-lg px-3 py-2 text-sm border">
+                            <div class="flex gap-2">
+                                <button onclick="fetchModels(2)" id="fetchBtn2" class="flex-1 btn-primary rounded-lg py-2 text-sm font-medium">
+                                    <i class="ri-refresh-line mr-1"></i>获取模型
+                                </button>
+                                <button onclick="testConnection(2)" id="testBtn2" class="flex-1 btn-secondary rounded-lg py-2 text-sm font-medium">
+                                    <i class="ri-link mr-1"></i>测试
+                                </button>
+                            </div>
+                            <div id="testResult2" class="text-xs hidden p-2 rounded-lg"></div>
+                        </div>
+
+                        <!-- 服务商3 -->
+                        <div class="card p-4 space-y-3">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="w-3 h-3 rounded-full bg-orange-500"></span>
+                                <span class="font-medium">模型 3</span>
+                            </div>
+                            <select id="provider3" onchange="onProviderChange(3)" class="w-full input-themed text-sm rounded-lg px-3 py-2 border">
+                                <option value="deepseek">DeepSeek</option>
+                                <option value="openai">OpenAI</option>
+                                <option value="anthropic">Anthropic</option>
+                                <option value="google">Google</option>
+                                <option value="qwen">通义千问</option>
+                                <option value="zhipu">智谱AI</option>
+                                <option value="siliconflow">硅基流动</option>
+                                <option value="doubao">字节豆包</option>
+                                <option value="openrouter">OpenRouter</option>
+                                <option value="custom">自定义</option>
+                            </select>
+                            <input type="password" id="apiKey3" placeholder="API Key" class="w-full input-themed rounded-lg px-3 py-2 text-sm border">
+                            <input type="text" id="baseUrl3" placeholder="Base URL" class="w-full input-themed rounded-lg px-3 py-2 text-sm border">
+                            <select id="model3" class="w-full input-themed rounded-lg px-3 py-2 text-sm border">
+                                <option value="deepseek-chat">deepseek-chat</option>
+                            </select>
+                            <input type="text" id="modelCustom3" placeholder="手动输入模型名称" class="hidden w-full input-themed rounded-lg px-3 py-2 text-sm border">
+                            <div class="flex gap-2">
+                                <button onclick="fetchModels(3)" id="fetchBtn3" class="flex-1 btn-primary rounded-lg py-2 text-sm font-medium">
+                                    <i class="ri-refresh-line mr-1"></i>获取模型
+                                </button>
+                                <button onclick="testConnection(3)" id="testBtn3" class="flex-1 btn-secondary rounded-lg py-2 text-sm font-medium">
+                                    <i class="ri-link mr-1"></i>测试
+                                </button>
+                            </div>
+                            <div id="testResult3" class="text-xs hidden p-2 rounded-lg"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-themed flex justify-end gap-3 flex-shrink-0">
+                <button onclick="closeSettings()" class="px-5 py-2 btn-secondary rounded-lg text-sm font-medium">取消</button>
+                <button onclick="saveConfig()" class="px-5 py-2 btn-primary rounded-lg text-sm font-medium flex items-center gap-2">
+                    <i class="ri-save-line"></i>保存配置
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const providerConfigs = {
+            openai: { baseUrl: 'https://api.openai.com/v1', models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo', 'o1-preview', 'o1-mini', 'o3-mini'], type: 'openai' },
+            anthropic: { baseUrl: 'https://api.anthropic.com', models: ['claude-sonnet-4-20250514', 'claude-3-5-sonnet-20241022', 'claude-3-opus-20240229', 'claude-3-haiku-20240307'], type: 'anthropic' },
+            google: { baseUrl: 'https://generativelanguage.googleapis.com/v1beta', models: ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash-exp', 'gemini-2.5-pro-preview-06-05'], type: 'google' },
+            deepseek: { baseUrl: 'https://api.deepseek.com/v1', models: ['deepseek-chat', 'deepseek-coder', 'deepseek-reasoner'], type: 'openai' },
+            qwen: { baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', models: ['qwen-turbo', 'qwen-plus', 'qwen-max', 'qwen-max-longcontext', 'qwen-vl-plus', 'qwen-vl-max', 'wanx-v1', 'wanx2.1-t2i-turbo', 'wanx2.1-t2i-plus'], type: 'openai' },
+            zhipu: { baseUrl: 'https://open.bigmodel.cn/api/paas/v4', models: ['glm-4-plus', 'glm-4-air', 'glm-4-airx', 'glm-4-long', 'glm-4-flash', 'glm-4v-plus', 'glm-4v', 'cogview-3-plus', 'cogview-3'], type: 'openai' },
+            siliconflow: { baseUrl: 'https://api.siliconflow.cn/v1', models: ['Qwen/Qwen2.5-72B-Instruct', 'deepseek-ai/DeepSeek-V3', 'deepseek-ai/DeepSeek-R1', 'THUDM/glm-4-9b-chat', 'Pro/Qwen/Qwen2.5-VL-7B-Instruct', 'black-forest-labs/FLUX.1-schnell'], type: 'openai' },
+            doubao: { baseUrl: 'https://ark.cn-beijing.volces.com/api/v3', models: [], type: 'openai' },
+            openrouter: { baseUrl: 'https://openrouter.ai/api/v1', models: ['openai/gpt-4o', 'anthropic/claude-3.5-sonnet', 'google/gemini-pro-1.5', 'deepseek/deepseek-chat', 'deepseek/deepseek-r1', 'meta-llama/llama-3.1-70b-instruct'], type: 'openrouter' },
+            custom: { baseUrl: '', models: [], type: 'openai' }
+        };
+
+        const modelCategories = {
+            vision: ['vision', '4o', 'gpt-4-turbo', 'gemini-1.5', 'gemini-2', 'gemini-pro-vision', 'claude-3', 'qwen-vl', 'qwen2.5-vl', 'vl-', '-vl', 'llava', 'cogvlm', 'minicpm-v', 'internvl', 'yi-vision', 'glm-4v'],
+            reasoning: ['o1', 'o3', 'reasoner', 'r1', 'thinking', 'deepthink', 'reflection'],
+            image: ['dall-e', 'stable-diffusion', 'sdxl', 'flux', 'midjourney', 'image-gen', 'cogview', 'wanx', 't2i', 'sora', 'video-gen', 'text-to-image', 'text2image', 'text2img', 'img-gen', 'image-generation', 'qwen-image', 'wanxiang', '万象', 'playground', 'ideogram', 'leonardo', 'dreamshaper', 'kandinsky', 'pixart', 'imagen', 'muse', 'parti', 'emu', 'gen-2', 'gen-3', 'pika', 'runway', 'kling', 'luma', 'haiper', 'animate', 'video', 'hunyuan', 'kolors', 'jimeng', '即梦'],
+            code: ['code', 'coder', 'codestral', 'starcoder', 'codellama', 'deepseek-coder', 'qwen2.5-coder'],
+            embedding: ['embed', 'embedding', 'bge-', 'e5-', 'gte-']
+        };
+
+        let chatHistories = { 1: [], 2: [], 3: [] };
+        let savedChats = [];
+        let currentChatId = null;
+        let currentFontSize = 14;
+        let currentTheme = 'dark';
+        let chatBgColors = { 1: '#111827', 2: '#111827', 3: '#111827' };
+        let chatBgImages = { 1: '', 2: '', 3: '' };
+        let msgBgColors = { 1: '#1e3a5f', 2: '#1a332a', 3: '#2d2a1e' };
+        let sidebarVisible = true;
+        let availableModels = { 1: [], 2: [], 3: [] };
+        let pendingFiles = { 1: [], 2: [], 3: [], global: [] };
+        let abortControllers = { 1: null, 2: null, 3: null };
+        let isGenerating = { 1: false, 2: false, 3: false };
+        let currentDropdownFilter = { 1: 'all', 2: 'all', 3: 'all' };
+        let currentSearchQuery = { 1: '', 2: '', 3: '' };
+        
+        // 跨域引用状态
+        let crossReferences = { 1: [], 2: [], 3: [] };
+        
+        // 联网搜索状态
+        let webSearchEnabled = { 1: false, 2: false, 3: false, global: false };
+        
+        // 生图模式状态
+        let imageGenEnabled = { 1: false, 2: false, 3: false };
+        
+        // 发送目标选择状态
+        let sendTargets = { 1: true, 2: true, 3: true };
+        
+        // 共用背景
+        let sharedBgEnabled = false;
+        let sharedBgImage = '';
+        
+        // 快捷键配置
+        let shortcuts = {
+            settings: { ctrl: true, shift: false, alt: false, key: ',', enabled: true },
+            sharedBg: { ctrl: true, shift: false, alt: false, key: 'b', enabled: true },
+            sidebar: { ctrl: true, shift: false, alt: false, key: '\\', enabled: true },
+            toggleInputs: { ctrl: true, shift: false, alt: false, key: 'i', enabled: true },
+            minimize: { ctrl: true, shift: false, alt: false, key: 'm', enabled: true }
+        };
+        let recordingShortcut = null;
+        
+        // 节日装饰配置
+        const themeDecorations = {
+            dark: [],
+            spring: ['🧧', '🏮', '🎆', '🧨', '🐉', '💰'],
+            christmas: ['❄️', '🎄', '⭐', '🎁', '🔔', '⛄'],
+            halloween: ['🎃', '👻', '🦇', '🕷️', '💀', '🌙'],
+            valentine: ['💕', '❤️', '💖', '🌹', '💝', '💗'],
+            midautumn: ['🥮', '🌕', '🏮', '🐰', '🌙', '✨'],
+            sakura: ['🌸', '🎀', '🌷', '💮', '🌺', '🦋'],
+            ocean: ['🌊', '🐚', '🐬', '⚓', '🐠', '🦀'],
+            light: []
+        };
+        
+        function toggleShortcutEnabled(name) {
+            shortcuts[name].enabled = !shortcuts[name].enabled;
+            const toggle = document.getElementById(`toggle_${name}`);
+            toggle.classList.toggle('active', shortcuts[name].enabled);
+            saveShortcuts();
+            showToast(shortcuts[name].enabled ? `✅ 快捷键已启用` : `⏸️ 快捷键已禁用`);
+        }
+        
+        function updateShortcutToggles() {
+            Object.keys(shortcuts).forEach(name => {
+                const toggle = document.getElementById(`toggle_${name}`);
+                if (toggle) {
+                    toggle.classList.toggle('active', shortcuts[name].enabled !== false);
+                }
+            });
+        }
+        
+        function createThemeDecorations(theme) {
+            const container = document.getElementById('themeDecorContainer');
+            container.innerHTML = '';
+            
+            const decorItems = themeDecorations[theme] || [];
+            if (decorItems.length === 0) return;
+            
+            // 创建 15 个装饰元素
+            for (let i = 0; i < 15; i++) {
+                const item = document.createElement('div');
+                item.className = 'theme-decor-item';
+                item.textContent = decorItems[Math.floor(Math.random() * decorItems.length)];
+                item.style.left = `${Math.random() * 100}%`;
+                item.style.animationDelay = `${Math.random() * 15}s`;
+                item.style.animationDuration = `${15 + Math.random() * 10}s`;
+                item.style.fontSize = `${16 + Math.random() * 16}px`;
+                container.appendChild(item);
+            }
+        }
+
+        const modelColors = { 1: 'green', 2: 'blue', 3: 'orange' };
+        const modelNames = { 1: '模型1', 2: '模型2', 3: '模型3' };
+
+        // 跨域分析功能
+        function toggleCrossPanel(index) {
+            const panel = document.getElementById(`crossPanel${index}`);
+            const btn = document.getElementById(`crossBtn${index}`);
+            const isOpen = panel.classList.contains('show');
+            
+            // 关闭所有面板
+            [1, 2, 3].forEach(i => {
+                document.getElementById(`crossPanel${i}`).classList.remove('show');
+                document.getElementById(`crossBtn${i}`).classList.remove('active');
+            });
+            
+            if (!isOpen) {
+                panel.classList.add('show');
+                btn.classList.add('active');
+            }
+        }
+
+        function toggleRef(fromIndex, toIndex) {
+            const checkbox = document.getElementById(`refCheck${fromIndex}_${toIndex}`);
+            const isChecked = checkbox.querySelector('input').checked;
+            
+            if (isChecked) {
+                if (!crossReferences[fromIndex].includes(toIndex)) {
+                    crossReferences[fromIndex].push(toIndex);
+                }
+                checkbox.classList.add('selected');
+            } else {
+                crossReferences[fromIndex] = crossReferences[fromIndex].filter(i => i !== toIndex);
+                checkbox.classList.remove('selected');
+            }
+            
+            updateRefIndicator(fromIndex);
+        }
+
+        function updateRefIndicator(index) {
+            const indicator = document.getElementById(`refIndicator${index}`);
+            const refs = crossReferences[index];
+            
+            if (refs.length === 0) {
+                indicator.classList.add('hidden');
+                indicator.innerHTML = '';
+            } else {
+                indicator.classList.remove('hidden');
+                const labels = refs.map(i => {
+                    const color = modelColors[i];
+                    return `<span class="ref-indicator"><span class="w-2 h-2 rounded-full bg-${color}-500"></span>模型${i}</span>`;
+                }).join('');
+                indicator.innerHTML = labels;
+            }
+        }
+
+        // 联网搜索功能
+        function toggleWebSearch(index) {
+            webSearchEnabled[index] = !webSearchEnabled[index];
+            const btn = document.getElementById(`searchBtn${index}`);
+            btn.classList.toggle('active', webSearchEnabled[index]);
+            showToast(webSearchEnabled[index] ? '🌐 已启用联网搜索' : '📴 已关闭联网搜索');
+        }
+
+        function toggleGlobalWebSearch() {
+            webSearchEnabled.global = !webSearchEnabled.global;
+            const btn = document.getElementById('globalSearchBtn');
+            btn.classList.toggle('active', webSearchEnabled.global);
+            btn.style.background = webSearchEnabled.global ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' : '';
+            showToast(webSearchEnabled.global ? '🌐 已启用全局联网搜索' : '📴 已关闭全局联网搜索');
+        }
+
+        // 生图模式功能
+        function toggleImageGen(index) {
+            imageGenEnabled[index] = !imageGenEnabled[index];
+            const btn = document.getElementById(`imageGenBtn${index}`);
+            btn.classList.toggle('active', imageGenEnabled[index]);
+            showToast(imageGenEnabled[index] ? '🎨 已启用生图模式' : '📝 已切换回文本模式');
+        }
+
+        function buildImageGenPrompt(message) {
+            return `[图像生成任务] 请根据以下描述生成图像：
+
+${message}
+
+要求：
+1. 请生成高质量、清晰的图像
+2. 忠实还原描述中的场景和细节
+3. 如果是艺术风格，请体现相应的艺术特征`;
+        }
+
+        // 切换发送目标
+        function toggleSendTarget(index) {
+            sendTargets[index] = !sendTargets[index];
+            const btn = document.getElementById(`sendTarget${index}`);
+            btn.classList.toggle('active', sendTargets[index]);
+            
+            // 确保至少选中一个
+            const anySelected = Object.values(sendTargets).some(v => v);
+            if (!anySelected) {
+                sendTargets[index] = true;
+                btn.classList.add('active');
+                showToast('⚠️ 至少需要选择一个模型');
+            } else {
+                const selectedCount = Object.values(sendTargets).filter(v => v).length;
+                const names = [1, 2, 3].filter(i => sendTargets[i]).map(i => `模型${i}`).join('、');
+                showToast(`📤 将发送给: ${names}`);
+            }
+        }
+
+        // 发送给选中的模型
+        async function sendToSelected() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            if (!message && pendingFiles.global.length === 0) return;
+
+            const selectedModels = [1, 2, 3].filter(i => sendTargets[i]);
+            if (selectedModels.length === 0) {
+                showToast('⚠️ 请至少选择一个模型');
+                return;
+            }
+
+            document.getElementById('sendBtn').disabled = true;
+            const files = [...pendingFiles.global];
+            const displayContent = await prepareMessageContent(message || '[文件]', files);
+            
+            // 如果开启联网搜索，添加搜索提示
+            const finalMessage = webSearchEnabled.global ? buildWebSearchPrompt(message || '请分析这些文件') : (message || '请分析这些文件');
+            
+            input.value = '';
+            pendingFiles.global = [];
+            updateGlobalFilePreview([]);
+
+            selectedModels.forEach(i => addMessage(i, 'user', displayContent, false, false));
+            await Promise.allSettled(selectedModels.map(i => callAPI(i, finalMessage, files)));
+            
+            document.getElementById('sendBtn').disabled = false;
+            autoSaveChat();
+        }
+
+        function buildWebSearchPrompt(message) {
+            const today = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+            return `[联网搜索模式] 今天是${today}。请根据你的最新知识和训练数据，尽可能提供最新、最准确的信息来回答以下问题。如果涉及实时数据或最新事件，请说明你的知识截止日期，并建议用户查阅最新来源。
+
+用户问题：${message}`;
+        }
+
+        function buildCrossReferenceContext(fromIndex) {
+            const refs = crossReferences[fromIndex];
+            if (refs.length === 0) return '';
+            
+            let context = '\n\n--- 引用的其他模型对话内容 ---\n';
+            
+            for (const refIndex of refs) {
+                const history = chatHistories[refIndex];
+                if (history.length === 0) continue;
+                
+                const modelName = getModelName(refIndex) || `模型${refIndex}`;
+                context += `\n【${modelName} 的对话】:\n`;
+                
+                // 获取最近的对话（最多5轮）
+                const recentHistory = history.slice(-10);
+                for (const msg of recentHistory) {
+                    const role = msg.role === 'user' ? '用户' : modelName;
+                    const content = typeof msg.content === 'string' ? msg.content : 
+                        (msg.content.find(p => p.type === 'text')?.text || '[图片/文件]');
+                    context += `${role}: ${content.slice(0, 500)}${content.length > 500 ? '...' : ''}\n`;
+                }
+            }
+            
+            context += '\n--- 引用结束 ---\n\n请基于以上引用的对话内容，';
+            return context;
+        }
+
+        function categorizeModel(modelName) {
+            const name = modelName.toLowerCase();
+            for (const [category, keywords] of Object.entries(modelCategories)) {
+                if (keywords.some(kw => name.includes(kw))) return category;
+            }
+            return 'text';
+        }
+
+        function getCategoryInfo(category) {
+            const info = {
+                vision: { icon: 'ri-eye-line', label: '视觉', color: 'tag-vision' },
+                text: { icon: 'ri-message-3-line', label: '文本', color: 'tag-text' },
+                reasoning: { icon: 'ri-brain-line', label: '推理', color: 'tag-reasoning' },
+                image: { icon: 'ri-image-line', label: '生图', color: 'tag-image' },
+                code: { icon: 'ri-code-line', label: '代码', color: 'tag-code' },
+                embedding: { icon: 'ri-database-2-line', label: '嵌入', color: 'tag-embedding' }
+            };
+            return info[category] || info.text;
+        }
+
+        function groupModelsByCategory(models) {
+            const groups = { vision: [], reasoning: [], code: [], text: [], image: [], embedding: [] };
+            models.forEach(model => {
+                const cat = categorizeModel(model);
+                if (groups[cat]) groups[cat].push(model);
+            });
+            return groups;
+        }
+
+        function toggleSidebar() {
+            sidebarVisible = !sidebarVisible;
+            const wrapper = document.getElementById('sidebarWrapper');
+            const toggleBtn = document.getElementById('sidebarToggleBtn');
+            wrapper.classList.toggle('collapsed', !sidebarVisible);
+            toggleBtn.innerHTML = sidebarVisible ? '<i class="ri-menu-line text-lg"></i>' : '<i class="ri-menu-unfold-line text-lg"></i>';
+        }
+
+        function setSharedBg(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                sharedBgImage = e.target.result;
+                if (sharedBgEnabled) applySharedBg();
+                showToast('✅ 共用背景已上传');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function toggleSharedBg() {
+            if (!sharedBgImage && !sharedBgEnabled) {
+                document.getElementById('sharedBgInput').click();
+                return;
+            }
+            sharedBgEnabled = !sharedBgEnabled;
+            document.getElementById('sharedBgStatus').textContent = sharedBgEnabled ? '开' : '关';
+            document.getElementById('sharedBgStatus').className = sharedBgEnabled ? 'text-xs text-green-400' : 'text-xs text-themed-secondary';
+            if (sharedBgEnabled) applySharedBg();
+            else restoreIndividualBg();
+            showToast(sharedBgEnabled ? '✅ 已启用共用背景' : '✅ 已恢复独立背景');
+        }
+
+        function applySharedBg() {
+            [1, 2, 3].forEach(i => {
+                const chat = document.getElementById(`chat${i}`);
+                if (sharedBgImage) {
+                    chat.style.backgroundImage = `url(${sharedBgImage})`;
+                    chat.style.backgroundColor = 'transparent';
+                    // 图片宽度设为容器的3倍，这样三个区域拼起来是完整的一张图
+                    chat.style.backgroundSize = '300% 100%';
+                    // 左栏显示图片左1/3，中栏显示中1/3，右栏显示右1/3
+                    chat.style.backgroundPosition = i === 1 ? '0% 50%' : (i === 2 ? '50% 50%' : '100% 50%');
+                }
+            });
+        }
+
+        function restoreIndividualBg() {
+            [1, 2, 3].forEach(i => {
+                const chat = document.getElementById(`chat${i}`);
+                if (chatBgImages[i]) {
+                    chat.style.backgroundImage = `url(${chatBgImages[i]})`;
+                    chat.style.backgroundSize = 'cover';
+                    chat.style.backgroundPosition = 'center';
+                } else {
+                    chat.style.backgroundImage = '';
+                    chat.style.backgroundColor = chatBgColors[i];
+                }
+            });
+        }
+
+        function openSettings() { document.getElementById('settingsModal').classList.remove('hidden'); }
+        function closeSettings() { document.getElementById('settingsModal').classList.add('hidden'); }
+
+        function setTheme(theme) {
+            currentTheme = theme;
+            document.body.className = `theme-${theme} min-h-screen`;
+            document.querySelectorAll('.theme-card').forEach(card => {
+                card.classList.toggle('selected', card.dataset.theme === theme);
+            });
+            localStorage.setItem('aiWorkbenchTheme', theme);
+            createThemeDecorations(theme);
+        }
+
+        function setFontSize(size) {
+            currentFontSize = parseInt(size);
+            document.querySelectorAll('.message-content').forEach(el => el.style.fontSize = `${size}px`);
+            localStorage.setItem('aiWorkbenchFontSize', size);
+        }
+        function updateFontSizeLabel(size) { document.getElementById('fontSizeValue').textContent = `${size}px`; }
+
+        function setChatBg(index, color) {
+            chatBgColors[index] = color;
+            const chat = document.getElementById(`chat${index}`);
+            chat.style.backgroundColor = color;
+            if (chatBgImages[index]) { chat.style.backgroundImage = ''; chatBgImages[index] = ''; }
+            updateColorOptions(`setChatBg(${index}`, color);
+            document.getElementById(`customColor${index}`).value = color;
+        }
+
+        function setChatBgImage(index, input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                chatBgImages[index] = e.target.result;
+                const chat = document.getElementById(`chat${index}`);
+                chat.style.backgroundImage = `url(${e.target.result})`;
+                chat.style.backgroundColor = 'transparent';
+                showToast(`✅ 模型 ${index} 背景已设置`);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearChatBgImage(index) {
+            chatBgImages[index] = '';
+            const chat = document.getElementById(`chat${index}`);
+            chat.style.backgroundImage = '';
+            chat.style.backgroundColor = chatBgColors[index];
+            showToast(`✅ 模型 ${index} 背景已清除`);
+        }
+
+        function setMsgBg(index, color) {
+            msgBgColors[index] = color;
+            document.documentElement.style.setProperty(`--msg-bg-${index}`, color);
+            document.querySelectorAll(`#chat${index} .msg-bubble-${index}`).forEach(el => el.style.backgroundColor = color);
+            updateColorOptions(`setMsgBg(${index}`, color);
+            document.getElementById(`msgColor${index}`).value = color;
+        }
+
+        function updateColorOptions(fnPrefix, color) {
+            document.querySelectorAll(`[onclick*="${fnPrefix}"]`).forEach(opt => {
+                if (opt.classList.contains('color-option')) opt.classList.toggle('selected', opt.dataset.color === color);
+            });
+        }
+
+        function toggleModelDropdown(index) {
+            const dropdown = document.getElementById(`modelDropdown${index}`);
+            const isOpen = dropdown.classList.contains('show');
+            document.querySelectorAll('.model-dropdown-menu').forEach(d => d.classList.remove('show'));
+            if (!isOpen) { 
+                currentSearchQuery[index] = '';
+                currentDropdownFilter[index] = 'all';
+                buildModelDropdown(index); 
+                dropdown.classList.add('show'); 
+                setTimeout(() => {
+                    const searchInput = dropdown.querySelector('input[type="text"]');
+                    if (searchInput) searchInput.focus();
+                }, 50);
+            }
+        }
+
+        function buildModelDropdown(index) {
+            const dropdown = document.getElementById(`modelDropdown${index}`);
+            const provider = document.getElementById(`provider${index}`).value;
+            const currentModel = getModelName(index);
+            const models = availableModels[index].length > 0 ? availableModels[index] : providerConfigs[provider]?.models || [];
+            
+            const searchQuery = currentSearchQuery[index].toLowerCase();
+            const filter = currentDropdownFilter[index];
+            
+            let filteredModels = models.filter(m => {
+                const matchSearch = !searchQuery || m.toLowerCase().includes(searchQuery);
+                const matchFilter = filter === 'all' || categorizeModel(m) === filter;
+                return matchSearch && matchFilter;
+            });
+            
+            const grouped = groupModelsByCategory(filteredModels);
+            
+            let html = `
+                <div class="model-search">
+                    <input type="text" placeholder="🔍 搜索模型... (共${models.length}个)" value="${currentSearchQuery[index]}" 
+                           oninput="handleModelSearch(${index}, this.value)" onclick="event.stopPropagation()">
+                </div>
+                <div class="category-tabs">
+                    <div class="category-tab ${filter === 'all' ? 'active' : ''}" onclick="event.stopPropagation(); setDropdownFilter(${index}, 'all')">全部</div>
+                    <div class="category-tab ${filter === 'vision' ? 'active' : ''}" onclick="event.stopPropagation(); setDropdownFilter(${index}, 'vision')"><i class="ri-eye-line"></i>视觉</div>
+                    <div class="category-tab ${filter === 'text' ? 'active' : ''}" onclick="event.stopPropagation(); setDropdownFilter(${index}, 'text')"><i class="ri-message-3-line"></i>文本</div>
+                    <div class="category-tab ${filter === 'reasoning' ? 'active' : ''}" onclick="event.stopPropagation(); setDropdownFilter(${index}, 'reasoning')"><i class="ri-brain-line"></i>推理</div>
+                    <div class="category-tab ${filter === 'code' ? 'active' : ''}" onclick="event.stopPropagation(); setDropdownFilter(${index}, 'code')"><i class="ri-code-line"></i>代码</div>
+                    <div class="category-tab ${filter === 'image' ? 'active' : ''}" onclick="event.stopPropagation(); setDropdownFilter(${index}, 'image')"><i class="ri-image-line"></i>生图</div>
+                </div>
+                <div class="model-list-container">
+            `;
+            
+            const categoryOrder = ['vision', 'reasoning', 'code', 'text', 'image', 'embedding'];
+            let hasModels = false;
+            
+            for (const cat of categoryOrder) {
+                if (grouped[cat] && grouped[cat].length > 0) {
+                    hasModels = true;
+                    const info = getCategoryInfo(cat);
+                    html += `<div class="model-category"><i class="${info.icon}"></i>${info.label} (${grouped[cat].length})</div>`;
+                    for (const model of grouped[cat]) {
+                        const isActive = model === currentModel;
+                        const catInfo = getCategoryInfo(categorizeModel(model));
+                        html += `<div class="model-dropdown-item ${isActive ? 'active' : ''}" onclick="selectModelFromDropdown(${index}, '${model.replace(/'/g, "\\'")}')">
+                            <span class="model-tag ${catInfo.color}">${catInfo.label}</span>
+                            <span class="truncate">${model}</span>
+                        </div>`;
+                    }
+                }
+            }
+            
+            if (!hasModels) html += '<div class="model-dropdown-item text-themed-secondary">暂无匹配模型</div>';
+            html += '</div>';
+            dropdown.innerHTML = html;
+        }
+
+        function handleModelSearch(index, query) {
+            currentSearchQuery[index] = query;
+            
+            // 不重建整个下拉菜单，只更新模型列表部分
+            const dropdown = document.getElementById(`modelDropdown${index}`);
+            const provider = document.getElementById(`provider${index}`).value;
+            const currentModel = getModelName(index);
+            const models = availableModels[index].length > 0 ? availableModels[index] : providerConfigs[provider]?.models || [];
+            
+            const searchQuery = query.toLowerCase();
+            const filter = currentDropdownFilter[index];
+            
+            let filteredModels = models.filter(m => {
+                const matchSearch = !searchQuery || m.toLowerCase().includes(searchQuery);
+                const matchFilter = filter === 'all' || categorizeModel(m) === filter;
+                return matchSearch && matchFilter;
+            });
+            
+            const grouped = groupModelsByCategory(filteredModels);
+            
+            // 只更新模型列表区域，不重建搜索框
+            let modelListHtml = '';
+            const categoryOrder = ['vision', 'reasoning', 'code', 'text', 'image', 'embedding'];
+            let hasModels = false;
+            
+            for (const cat of categoryOrder) {
+                if (grouped[cat] && grouped[cat].length > 0) {
+                    hasModels = true;
+                    const info = getCategoryInfo(cat);
+                    modelListHtml += `<div class="model-category"><i class="${info.icon}"></i>${info.label} (${grouped[cat].length})</div>`;
+                    for (const model of grouped[cat]) {
+                        const isActive = model === currentModel;
+                        const catInfo = getCategoryInfo(categorizeModel(model));
+                        modelListHtml += `<div class="model-dropdown-item ${isActive ? 'active' : ''}" onclick="selectModelFromDropdown(${index}, '${model.replace(/'/g, "\\'")}')">
+                            <span class="model-tag ${catInfo.color}">${catInfo.label}</span>
+                            <span class="truncate">${model}</span>
+                        </div>`;
+                    }
+                }
+            }
+            
+            if (!hasModels) modelListHtml = '<div class="model-dropdown-item text-themed-secondary">暂无匹配模型</div>';
+            
+            // 查找并更新模型列表容器
+            let modelListContainer = dropdown.querySelector('.model-list-container');
+            if (modelListContainer) {
+                modelListContainer.innerHTML = modelListHtml;
+            }
+        }
+
+        function setDropdownFilter(index, filter) {
+            currentDropdownFilter[index] = filter;
+            buildModelDropdown(index);
+        }
+
+        function selectModelFromDropdown(index, model) {
+            const provider = document.getElementById(`provider${index}`).value;
+            const modelSelect = document.getElementById(`model${index}`);
+            const modelCustom = document.getElementById(`modelCustom${index}`);
+            
+            if (![...modelSelect.options].some(o => o.value === model)) {
+                modelSelect.innerHTML += `<option value="${model}">${model}</option>`;
+            }
+            modelSelect.value = model;
+            if (provider === 'custom') modelCustom.value = model;
+            
+            updateModelLabel(index);
+            document.getElementById(`modelDropdown${index}`).classList.remove('show');
+            showToast(`✅ 已切换为 ${model}`);
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.model-dropdown')) document.querySelectorAll('.model-dropdown-menu').forEach(d => d.classList.remove('show'));
+            // 关闭跨域面板
+            if (!e.target.closest('.mini-input-area')) {
+                [1, 2, 3].forEach(i => {
+                    document.getElementById(`crossPanel${i}`).classList.remove('show');
+                    document.getElementById(`crossBtn${i}`).classList.remove('active');
+                });
+            }
+        });
+
+        function onProviderChange(index) {
+            const provider = document.getElementById(`provider${index}`).value;
+            const config = providerConfigs[provider];
+            document.getElementById(`baseUrl${index}`).value = config.baseUrl;
+            const modelSelect = document.getElementById(`model${index}`);
+            const modelCustom = document.getElementById(`modelCustom${index}`);
+            
+            if (provider === 'custom') {
+                modelCustom.classList.remove('hidden');
+                modelSelect.classList.add('hidden');
+            } else {
+                modelSelect.classList.remove('hidden');
+                modelCustom.classList.add('hidden');
+                modelSelect.innerHTML = config.models.map(m => `<option value="${m}">${m}</option>`).join('');
+            }
+            
+            availableModels[index] = config.models.slice();
+            updateModelLabel(index);
+            document.getElementById(`testResult${index}`).classList.add('hidden');
+        }
+
+        async function fetchModels(index) {
+            const provider = document.getElementById(`provider${index}`).value;
+            const apiKey = document.getElementById(`apiKey${index}`).value;
+            const baseUrl = document.getElementById(`baseUrl${index}`).value;
+            const config = providerConfigs[provider] || { type: 'openai' };
+            const fetchBtn = document.getElementById(`fetchBtn${index}`);
+            const testResult = document.getElementById(`testResult${index}`);
+            const modelSelect = document.getElementById(`model${index}`)
+
+            if (!apiKey || !baseUrl) { showResult(testResult, '❌ 请填写 API Key 和 URL', false); return; }
+            fetchBtn.disabled = true;
+            fetchBtn.innerHTML = '<i class="ri-loader-4-line animate-spin"></i>';
+
+            try {
+                let models = [];
+                const apiType = config.type || 'openai';
+                
+                if (apiType === 'openai' || apiType === 'openrouter') {
+                    // 获取所有模型，不做任何限制
+                    let allModels = [];
+                    
+                    // OpenRouter 需要额外的请求头
+                    const headers = { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
+                    if (apiType === 'openrouter') {
+                        headers['HTTP-Referer'] = 'https://ai-workbench.app';
+                        headers['X-Title'] = 'AI-Workbench';
+                    }
+                    
+                    // 首先尝试不带分页参数获取
+                    const firstResponse = await fetch(`${baseUrl}/models`, { headers });
+                    
+                    if (firstResponse.ok) {
+                        const data = await firstResponse.json();
+                        console.log('API 返回原始数据:', data); // 调试输出
+                        console.log('API data.data 长度:', data.data?.length); // 调试输出
+                        
+                        // 兼容多种返回格式，提取所有模型ID
+                        const extractModelId = (m) => {
+                            if (typeof m === 'string') return m;
+                            // 尝试多种可能的字段名
+                            return m.id || m.name || m.model || m.model_id || m.model_name || null;
+                        };
+                        
+                        if (Array.isArray(data)) {
+                            // 直接返回数组格式
+                            allModels = data.map(extractModelId);
+                        } else if (data.data && Array.isArray(data.data)) {
+                            // OpenAI 标准格式 { data: [...] }
+                            allModels = data.data.map(extractModelId);
+                            console.log('从 data.data 提取模型数:', allModels.length);
+                        } else if (data.models && Array.isArray(data.models)) {
+                            // 另一种格式 { models: [...] }
+                            allModels = data.models.map(extractModelId);
+                        } else if (data.object === 'list' && data.data) {
+                            // 确保处理 object: list 格式
+                            allModels = data.data.map(extractModelId);
+                        }
+                        
+                        // 如果第一次没获取完，尝试分页
+                        if (data.has_more === true) {
+                            let hasMore = true;
+                            let lastId = data.data?.[data.data.length - 1]?.id;
+                            let fetchCount = 0;
+                            const maxPages = 50; // 增加页数上限
+                            
+                            while (hasMore && fetchCount < maxPages && lastId) {
+                                fetchCount++;
+                                try {
+                                    const pageResponse = await fetch(`${baseUrl}/models?after=${lastId}`, { headers });
+                                    
+                                    if (pageResponse.ok) {
+                                        const pageData = await pageResponse.json();
+                                        const pageModels = (pageData.data || []).map(extractModelId);
+                                        if (pageModels.length === 0) {
+                                            hasMore = false;
+                                        } else {
+                                            allModels = allModels.concat(pageModels);
+                                            hasMore = pageData.has_more === true;
+                                            lastId = pageData.data?.[pageData.data.length - 1]?.id;
+                                        }
+                                    } else {
+                                        hasMore = false;
+                                    }
+                                } catch (e) {
+                                    console.log('分页获取错误:', e);
+                                    hasMore = false;
+                                }
+                            }
+                        }
+                    } else {
+                        const errData = await firstResponse.json().catch(() => ({}));
+                        throw new Error(errData.error?.message || errData.message || `HTTP ${firstResponse.status}`);
+                    }
+                    
+                    // 去重并过滤无效值（不做任何其他过滤）
+                    models = [...new Set(allModels)].filter(id => id && typeof id === 'string').sort();
+                    
+                    console.log(`共获取到 ${models.length} 个模型`); // 调试输出
+                    // 输出前20个模型名便于检查
+                    console.log('前20个模型:', models.slice(0, 20));
+                    // 检查是否有gemini
+                    const geminiModels = models.filter(m => m.toLowerCase().includes('gemini'));
+                    console.log('Gemini 相关模型:', geminiModels);
+                    
+                } else if (apiType === 'anthropic') {
+                    models = config.models;
+                } else if (apiType === 'google') {
+                    const response = await fetch(`${baseUrl}/models?key=${apiKey}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        // 不再过滤只含gemini的，获取所有模型
+                        models = (data.models || []).map(m => m.name.replace('models/', '')).sort();
+                    } else throw new Error(`HTTP ${response.status}`);
+                }
+
+                if (models.length > 0) {
+                    availableModels[index] = models;
+                    const current = modelSelect.value;
+                    modelSelect.innerHTML = models.map(m => `<option value="${m}">${m}</option>`).join('');
+                    if (models.includes(current)) modelSelect.value = current;
+                    if (provider === 'custom') modelSelect.classList.remove('hidden');
+                    
+                    const grouped = groupModelsByCategory(models);
+                    const stats = Object.entries(grouped).filter(([k,v]) => v.length > 0).map(([k,v]) => `${getCategoryInfo(k).label}:${v.length}`).join(' ');
+                    showResult(testResult, `✅ 获取 ${models.length} 个模型 (${stats})`, true);
+                    updateModelLabel(index);
+                } else showResult(testResult, '⚠️ 未找到可用模型', false);
+            } catch (error) { 
+                console.error('Fetch models error:', error);
+                showResult(testResult, `❌ ${error.message}`, false); 
+            }
+            fetchBtn.disabled = false;
+            fetchBtn.innerHTML = '<i class="ri-refresh-line mr-1"></i>获取模型';
+        }
+
+        async function testConnection(index) {
+            const provider = document.getElementById(`provider${index}`).value;
+            const apiKey = document.getElementById(`apiKey${index}`).value;
+            const baseUrl = document.getElementById(`baseUrl${index}`).value;
+            const model = getModelName(index);
+            const config = providerConfigs[provider] || { type: 'openai' };
+            const testBtn = document.getElementById(`testBtn${index}`);
+            const testResult = document.getElementById(`testResult${index}`);
+
+            if (!apiKey || !baseUrl) { showResult(testResult, '❌ 请填写 API Key 和 URL', false); return; }
+            if (!model) { showResult(testResult, '❌ 请选择或输入模型', false); return; }
+            
+            testBtn.disabled = true;
+            testBtn.innerHTML = '<i class="ri-loader-4-line animate-spin"></i>';
+
+            try {
+                const apiType = config.type || 'openai';
+                
+                if (apiType === 'openai' || apiType === 'openrouter') {
+                    const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
+                    // OpenRouter 需要额外的请求头
+                    if (apiType === 'openrouter') {
+                        headers['HTTP-Referer'] = 'https://ai-workbench.app';
+                        headers['X-Title'] = 'AI-Workbench';
+                    }
+                    const response = await fetch(`${baseUrl}/chat/completions`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ model, messages: [{ role: 'user', content: 'Hi' }], max_tokens: 5, stream: false })
+                    });
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        throw new Error(errData.error?.message || errData.message || `HTTP ${response.status}`);
+                    }
+                    showResult(testResult, `✅ 连接成功`, true);
+                } else if (apiType === 'anthropic') {
+                    const response = await fetch(`${baseUrl}/v1/messages`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+                        body: JSON.stringify({ model, max_tokens: 5, messages: [{ role: 'user', content: 'Hi' }] })
+                    });
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        throw new Error(errData.error?.message || `HTTP ${response.status}`);
+                    }
+                    showResult(testResult, `✅ 连接成功`, true);
+                } else if (apiType === 'google') {
+                    const response = await fetch(`${baseUrl}/models/${model}:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: 'Hi' }] }], generationConfig: { maxOutputTokens: 5 } })
+                    });
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        throw new Error(errData.error?.message || `HTTP ${response.status}`);
+                    }
+                    showResult(testResult, `✅ 连接成功`, true);
+                }
+            } catch (error) { 
+                console.error('Test connection error:', error);
+                showResult(testResult, `❌ ${error.message}`, false); 
+            }
+            testBtn.disabled = false;
+            testBtn.innerHTML = '<i class="ri-link mr-1"></i>测试';
+        }
+
+        function showResult(el, msg, success) {
+            el.textContent = msg;
+            el.className = `text-xs p-2 rounded-lg ${success ? 'bg-green-900/50 text-green-400 border border-green-700' : 'bg-red-900/50 text-red-400 border border-red-700'}`;
+            el.classList.remove('hidden');
+        }
+
+        function getModelName(index) {
+            const provider = document.getElementById(`provider${index}`).value;
+            const modelSelect = document.getElementById(`model${index}`);
+            const modelCustom = document.getElementById(`modelCustom${index}`);
+            if (provider === 'custom' && modelCustom.value.trim()) return modelCustom.value.trim();
+            return modelSelect.value;
+        }
+
+        function updateModelLabel(index) {
+            const name = getModelName(index);
+            const label = document.getElementById(`modelLabel${index}`);
+            const cat = categorizeModel(name);
+            const catInfo = getCategoryInfo(cat);
+            const displayName = name.length > 20 ? name.substring(0, 20) + '...' : name;
+            label.innerHTML = name ? `<span class="model-tag ${catInfo.color} mr-1">${catInfo.label}</span>${displayName}` : '未选择';
+            label.title = name || '未选择';
+        }
+
+        function handleFileSelect(index, input) {
+            pendingFiles[index] = Array.from(input.files);
+            updateFilePreview(index, pendingFiles[index]);
+        }
+
+        function handleGlobalFileSelect(input) {
+            pendingFiles.global = Array.from(input.files);
+            updateGlobalFilePreview(pendingFiles.global);
+        }
+
+        function updateFilePreview(index, files) {
+            const preview = document.getElementById(`filePreview${index}`);
+            if (files.length === 0) { preview.classList.add('hidden'); preview.innerHTML = ''; return; }
+            preview.classList.remove('hidden');
+            preview.innerHTML = files.map((f, i) => {
+                const isImage = f.type.startsWith('image/');
+                if (isImage) {
+                    const url = URL.createObjectURL(f);
+                    return `<div class="file-preview-item"><img src="${url}" alt="${f.name}"><span class="truncate max-w-20">${f.name}</span><button onclick="removeFile(${index}, ${i})" class="text-red-400 hover:text-red-300 ml-1">×</button></div>`;
+                }
+                return `<div class="file-preview-item"><i class="ri-file-line"></i><span class="truncate max-w-20">${f.name}</span><button onclick="removeFile(${index}, ${i})" class="text-red-400 hover:text-red-300 ml-1">×</button></div>`;
+            }).join('');
+        }
+
+        function updateGlobalFilePreview(files) {
+            const preview = document.getElementById('globalFilePreview');
+            if (files.length === 0) { preview.classList.add('hidden'); preview.innerHTML = ''; return; }
+            preview.classList.remove('hidden');
+            preview.innerHTML = files.map((f, i) => {
+                const isImage = f.type.startsWith('image/');
+                if (isImage) {
+                    const url = URL.createObjectURL(f);
+                    return `<div class="file-preview-item"><img src="${url}" alt="${f.name}"><span class="truncate max-w-24">${f.name}</span><button onclick="removeGlobalFile(${i})" class="text-red-400 hover:text-red-300 ml-1">×</button></div>`;
+                }
+                return `<div class="file-preview-item"><i class="ri-file-line"></i><span class="truncate max-w-24">${f.name}</span><button onclick="removeGlobalFile(${i})" class="text-red-400 hover:text-red-300 ml-1">×</button></div>`;
+            }).join('');
+        }
+
+        function removeFile(index, fileIndex) {
+            pendingFiles[index].splice(fileIndex, 1);
+            updateFilePreview(index, pendingFiles[index]);
+        }
+
+        function removeGlobalFile(fileIndex) {
+            pendingFiles.global.splice(fileIndex, 1);
+            updateGlobalFilePreview(pendingFiles.global);
+        }
+
+        async function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function prepareMessageContent(text, files) {
+            if (!files || files.length === 0) return text;
+            const parts = [{ type: 'text', text }];
+            for (const file of files) {
+                if (file.type.startsWith('image/')) {
+                    const base64 = await fileToBase64(file);
+                    parts.push({ type: 'image_url', image_url: { url: base64 } });
+                } else {
+                    const content = await file.text().catch(() => '[无法读取文件内容]');
+                    parts.push({ type: 'text', text: `\n\n文件 "${file.name}" 内容:\n${content}` });
+                }
+            }
+            return parts;
+        }
+
+        function stopResponse(index) {
+            if (abortControllers[index]) {
+                abortControllers[index].abort();
+                abortControllers[index] = null;
+                isGenerating[index] = false;
+                setStatus(index, '已中断', 'error');
+                finishStreamingMessage(index);
+                updateStopButtons();
+                showToast(`⏹️ 模型 ${index} 已停止`);
+            }
+        }
+
+        function stopAllResponses() {
+            [1, 2, 3].forEach(i => {
+                if (abortControllers[i]) {
+                    abortControllers[i].abort();
+                    abortControllers[i] = null;
+                    isGenerating[i] = false;
+                    setStatus(i, '已中断', 'error');
+                    finishStreamingMessage(i);
+                }
+            });
+            updateStopButtons();
+            showToast('⏹️ 所有模型已停止');
+        }
+
+        function updateStopButtons() {
+            const anyGenerating = Object.values(isGenerating).some(v => v);
+            document.getElementById('stopAllBtn').classList.toggle('hidden', !anyGenerating);
+            [1, 2, 3].forEach(i => document.getElementById(`stopBtn${i}`).classList.toggle('hidden', !isGenerating[i]));
+        }
+
+        function addMessage(chatIndex, role, content, isStreaming = false, hasRef = false) {
+            const chat = document.getElementById(`chat${chatIndex}`);
+            if (chat.querySelector('.text-center')) chat.innerHTML = '';
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+            const bubble = document.createElement('div');
+            
+            if (role === 'user') {
+                bubble.className = 'bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl rounded-br-sm px-4 py-2 max-w-[85%] shadow-lg text-sm';
+            } else {
+                bubble.className = `msg-bubble-${chatIndex} rounded-2xl rounded-bl-sm px-4 py-2 max-w-[85%] message-content shadow-lg`;
+                bubble.style.backgroundColor = msgBgColors[chatIndex];
+                bubble.style.fontSize = `${currentFontSize}px`;
+            }
+            
+            if (isStreaming) {
+                bubble.innerHTML = `<div class="typing-indicator flex gap-1.5 py-1"><span class="w-2 h-2 bg-gray-400 rounded-full"></span><span class="w-2 h-2 bg-gray-400 rounded-full"></span><span class="w-2 h-2 bg-gray-400 rounded-full"></span></div>`;
+                bubble.id = `streaming${chatIndex}`;
+            } else {
+                let displayContent = '';
+                if (hasRef && role === 'user') {
+                    displayContent = '<span class="ref-indicator mr-1"><i class="ri-git-merge-line"></i>跨域分析</span>';
+                }
+                if (typeof content === 'string') {
+                    displayContent += role === 'user' ? escapeHtml(content) : marked.parse(content);
+                } else {
+                    displayContent += role === 'user' ? formatUserContent(content) : marked.parse(content);
+                }
+                bubble.innerHTML = displayContent;
+            }
+            msgDiv.appendChild(bubble);
+            chat.appendChild(msgDiv);
+            chat.scrollTop = chat.scrollHeight;
+            return bubble;
+        }
+
+        function formatUserContent(content) {
+            if (typeof content === 'string') return escapeHtml(content);
+            let html = '';
+            for (const part of content) {
+                if (part.type === 'text') html += escapeHtml(part.text);
+                else if (part.type === 'image_url') html += `<img src="${part.image_url.url}" class="max-w-40 max-h-40 rounded-lg mt-2 inline-block">`;
+            }
+            return html;
+        }
+
+        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+
+        function updateStreamingMessage(chatIndex, content) {
+            const bubble = document.getElementById(`streaming${chatIndex}`);
+            if (bubble) { bubble.innerHTML = marked.parse(content); bubble.style.fontSize = `${currentFontSize}px`; }
+            document.getElementById(`chat${chatIndex}`).scrollTop = document.getElementById(`chat${chatIndex}`).scrollHeight;
+        }
+
+        function finishStreamingMessage(chatIndex) {
+            const bubble = document.getElementById(`streaming${chatIndex}`);
+            if (bubble) bubble.removeAttribute('id');
+        }
+
+        function setStatus(index, status, type = 'normal') {
+            const el = document.getElementById(`status${index}`);
+            el.textContent = status;
+            const baseClass = 'text-xs flex-shrink-0 px-2 py-1 rounded-full';
+            if (type === 'loading') el.className = `${baseClass} bg-yellow-900/50 text-yellow-400`;
+            else if (type === 'success') el.className = `${baseClass} bg-green-900/50 text-green-400`;
+            else if (type === 'error') el.className = `${baseClass} bg-red-900/50 text-red-400`;
+            else el.className = `${baseClass} bg-themed-tertiary text-themed-secondary`;
+        }
+
+        async function callAPI(index, message, files = [], crossRefContext = '') {
+            const provider = document.getElementById(`provider${index}`).value;
+            const apiKey = document.getElementById(`apiKey${index}`).value;
+            const baseUrl = document.getElementById(`baseUrl${index}`).value;
+            const model = getModelName(index);
+            const config = providerConfigs[provider] || { type: 'openai' };
+            const apiType = config.type || 'openai';
+
+            if (!apiKey || !baseUrl || !model) {
+                setStatus(index, '未配置', 'error');
+                addMessage(index, 'assistant', '⚠️ 请先配置此模型的 API');
+                return;
+            }
+
+            abortControllers[index] = new AbortController();
+            isGenerating[index] = true;
+            updateStopButtons();
+
+            // 如果有跨域引用上下文，添加到消息前面
+            const finalMessage = crossRefContext ? crossRefContext + message : message;
+            
+            const content = await prepareMessageContent(finalMessage, files);
+            chatHistories[index].push({ role: 'user', content });
+            setStatus(index, '思考中...', 'loading');
+            addMessage(index, 'assistant', '', true);
+
+            let fullResponse = '';
+
+            try {
+                if (apiType === 'openai' || apiType === 'openrouter') {
+                    const messages = chatHistories[index].map(m => ({ role: m.role, content: m.content }));
+                    const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
+                    // OpenRouter 需要额外的请求头
+                    if (apiType === 'openrouter') {
+                        headers['HTTP-Referer'] = 'https://ai-workbench.app';
+                        headers['X-Title'] = 'AI-Workbench';
+                    }
+                    const response = await fetch(`${baseUrl}/chat/completions`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ model, messages, stream: true }),
+                        signal: abortControllers[index].signal
+                    });
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        throw new Error(errData.error?.message || errData.message || `HTTP ${response.status}`);
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop() || '';
+                        for (const line of lines) {
+                            const trimmed = line.trim();
+                            if (!trimmed.startsWith('data: ')) continue;
+                            const data = trimmed.slice(6);
+                            if (data === '[DONE]') continue;
+                            try {
+                                const json = JSON.parse(data);
+                                const c = json.choices?.[0]?.delta?.content;
+                                if (c) { fullResponse += c; updateStreamingMessage(index, fullResponse); }
+                            } catch {}
+                        }
+                    }
+                } else if (apiType === 'anthropic') {
+                    const messages = chatHistories[index].map(m => {
+                        if (typeof m.content === 'string') return { role: m.role, content: m.content };
+                        const parts = m.content.map(p => {
+                            if (p.type === 'text') return { type: 'text', text: p.text };
+                            if (p.type === 'image_url') {
+                                const base64Data = p.image_url.url.split(',')[1];
+                                const mediaType = p.image_url.url.match(/data:(.*?);/)?.[1] || 'image/jpeg';
+                                return { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } };
+                            }
+                            return { type: 'text', text: '' };
+                        });
+                        return { role: m.role, content: parts };
+                    });
+                    const response = await fetch(`${baseUrl}/v1/messages`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+                        body: JSON.stringify({ model, max_tokens: 4096, messages, stream: true }),
+                        signal: abortControllers[index].signal
+                    });
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        throw new Error(errData.error?.message || `HTTP ${response.status}`);
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop() || '';
+                        for (const line of lines) {
+                            const trimmed = line.trim();
+                            if (!trimmed.startsWith('data: ')) continue;
+                            try {
+                                const json = JSON.parse(trimmed.slice(6));
+                                if (json.type === 'content_block_delta' && json.delta?.text) {
+                                    fullResponse += json.delta.text;
+                                    updateStreamingMessage(index, fullResponse);
+                                }
+                            } catch {}
+                        }
+                    }
+                } else if (apiType === 'google') {
+                    const response = await fetch(`${baseUrl}/models/${model}:streamGenerateContent?key=${apiKey}&alt=sse`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            contents: chatHistories[index].map(m => ({ 
+                                role: m.role === 'assistant' ? 'model' : 'user', 
+                                parts: [{ text: typeof m.content === 'string' ? m.content : m.content.find(p => p.type === 'text')?.text || '' }] 
+                            })) 
+                        }),
+                        signal: abortControllers[index].signal
+                    });
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        throw new Error(errData.error?.message || `HTTP ${response.status}`);
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop() || '';
+                        for (const line of lines) {
+                            const trimmed = line.trim();
+                            if (!trimmed.startsWith('data: ')) continue;
+                            try {
+                                const json = JSON.parse(trimmed.slice(6));
+                                const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+                                if (text) { fullResponse += text; updateStreamingMessage(index, fullResponse); }
+                            } catch {}
+                        }
+                    }
+                }
+
+                if (!fullResponse) throw new Error('未收到响应');
+                finishStreamingMessage(index);
+                chatHistories[index].push({ role: 'assistant', content: fullResponse });
+                setStatus(index, '完成', 'success');
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    if (fullResponse) chatHistories[index].push({ role: 'assistant', content: fullResponse + '\n\n[已中断]' });
+                } else {
+                    console.error(`Model ${index} error:`, error);
+                    updateStreamingMessage(index, `❌ 错误: ${error.message}`);
+                    finishStreamingMessage(index);
+                    setStatus(index, '错误', 'error');
+                    chatHistories[index].pop();
+                }
+            } finally {
+                isGenerating[index] = false;
+                abortControllers[index] = null;
+                updateStopButtons();
+            }
+        }
+
+        async function sendToAll() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            if (!message && pendingFiles.global.length === 0) return;
+
+            document.getElementById('sendBtn').disabled = true;
+            const files = [...pendingFiles.global];
+            const displayContent = await prepareMessageContent(message || '[文件]', files);
+            
+            // 如果开启联网搜索，添加搜索提示
+            const finalMessage = webSearchEnabled.global ? buildWebSearchPrompt(message || '请分析这些文件') : (message || '请分析这些文件');
+            
+            input.value = '';
+            pendingFiles.global = [];
+            updateGlobalFilePreview([]);
+
+            [1, 2, 3].forEach(i => addMessage(i, 'user', displayContent, false, false, webSearchEnabled.global));
+            await Promise.allSettled([1, 2, 3].map(i => callAPI(i, finalMessage, files)));
+            
+            document.getElementById('sendBtn').disabled = false;
+            autoSaveChat();
+        }
+
+        async function sendToSingle(index) {
+            const input = document.getElementById(`miniInput${index}`);
+            const message = input.value.trim();
+            const files = [...pendingFiles[index]];
+            if (!message && files.length === 0) return;
+
+            // 获取跨域引用上下文
+            const crossRefContext = buildCrossReferenceContext(index);
+            const hasRef = crossReferences[index].length > 0;
+
+            const displayContent = await prepareMessageContent(message || '[文件]', files);
+            input.value = '';
+            pendingFiles[index] = [];
+            updateFilePreview(index, []);
+
+            // 构建最终消息（生图模式或联网搜索）
+            let finalMessage = message || '请分析这些文件';
+            if (imageGenEnabled[index]) {
+                finalMessage = buildImageGenPrompt(finalMessage);
+            } else if (webSearchEnabled[index]) {
+                finalMessage = buildWebSearchPrompt(finalMessage);
+            }
+
+            // 显示用户消息（带引用标记）
+            addMessage(index, 'user', displayContent, false, hasRef);
+            
+            // 调用API时传入跨域引用上下文
+            await callAPI(index, finalMessage, files, crossRefContext);
+            autoSaveChat();
+        }
+
+        function handleKeyDown(e) { 
+            if (e.key === 'Enter' && !e.shiftKey) { 
+                e.preventDefault(); 
+                sendToSelected(); 
+            } 
+        }
+        function handleMiniKeyDown(e, index) { 
+            if (e.key === 'Enter' && !e.shiftKey) { 
+                e.preventDefault(); 
+                sendToSingle(index); 
+            } 
+        }
+        
+        // 独立输入框折叠状态
+        let miniInputVisible = { 1: true, 2: true, 3: true };
+        let allMiniInputsVisible = true;
+        
+        function toggleMiniInput(index) {
+            miniInputVisible[index] = !miniInputVisible[index];
+            const area = document.getElementById(`miniInputArea${index}`);
+            const icon = document.getElementById(`miniToggleIcon${index}`);
+            
+            if (miniInputVisible[index]) {
+                area.classList.remove('collapsed');
+                icon.className = 'ri-arrow-down-s-line';
+            } else {
+                area.classList.add('collapsed');
+                icon.className = 'ri-arrow-up-s-line';
+            }
+            
+            // 更新全局按钮状态
+            updateToggleAllBtnState();
+        }
+        
+        function toggleAllMiniInputs() {
+            allMiniInputsVisible = !allMiniInputsVisible;
+            
+            [1, 2, 3].forEach(index => {
+                miniInputVisible[index] = allMiniInputsVisible;
+                const area = document.getElementById(`miniInputArea${index}`);
+                const icon = document.getElementById(`miniToggleIcon${index}`);
+                
+                if (allMiniInputsVisible) {
+                    area.classList.remove('collapsed');
+                    icon.className = 'ri-arrow-down-s-line';
+                } else {
+                    area.classList.add('collapsed');
+                    icon.className = 'ri-arrow-up-s-line';
+                }
+            });
+            
+            updateToggleAllBtnState();
+            showToast(allMiniInputsVisible ? '✅ 已显示独立输入框' : '✅ 已隐藏独立输入框');
+        }
+        
+        function updateToggleAllBtnState() {
+            const allVisible = Object.values(miniInputVisible).every(v => v);
+            const allHidden = Object.values(miniInputVisible).every(v => !v);
+            const icon = document.getElementById('toggleAllMiniIcon');
+            const btn = document.getElementById('toggleAllMiniBtn');
+            
+            if (allVisible) {
+                icon.className = 'ri-layout-row-line';
+                btn.title = '隐藏所有独立输入框';
+                allMiniInputsVisible = true;
+            } else if (allHidden) {
+                icon.className = 'ri-layout-bottom-line';
+                btn.title = '显示所有独立输入框';
+                allMiniInputsVisible = false;
+            } else {
+                icon.className = 'ri-layout-row-line';
+                btn.title = '切换独立输入框显示';
+            }
+        }
+
+
+
+        function newChat() {
+            if (chatHistories[1].length || chatHistories[2].length || chatHistories[3].length) autoSaveChat();
+            currentChatId = Date.now().toString();
+            chatHistories = { 1: [], 2: [], 3: [] };
+            crossReferences = { 1: [], 2: [], 3: [] };
+            [1, 2, 3].forEach(i => {
+                document.getElementById(`chat${i}`).innerHTML = `<div class="text-center text-themed-secondary text-sm py-8"><i class="ri-chat-3-line text-3xl mb-2 block opacity-50"></i>开始对话...</div>`;
+                setStatus(i, '就绪');
+                updateRefIndicator(i);
+                // 重置复选框
+                [1, 2, 3].filter(j => j !== i).forEach(j => {
+                    const checkbox = document.getElementById(`refCheck${i}_${j}`);
+                    if (checkbox) {
+                        checkbox.querySelector('input').checked = false;
+                        checkbox.classList.remove('selected');
+                    }
+                });
+            });
+            renderHistory();
+        }
+
+        function autoSaveChat() {
+            if (!chatHistories[1].length && !chatHistories[2].length && !chatHistories[3].length) return;
+            const firstMsg = chatHistories[1][0]?.content || chatHistories[2][0]?.content || chatHistories[3][0]?.content || '新对话';
+            const msgText = typeof firstMsg === 'string' ? firstMsg : (firstMsg.find(p => p.type === 'text')?.text || '新对话');
+            const title = msgText.slice(0, 30) + (msgText.length > 30 ? '...' : '');
+            const existing = savedChats.findIndex(c => c.id === currentChatId);
+            const chatData = { id: currentChatId || Date.now().toString(), title, histories: JSON.parse(JSON.stringify(chatHistories)), timestamp: Date.now() };
+            if (existing >= 0) savedChats[existing] = chatData;
+            else savedChats.unshift(chatData);
+            currentChatId = chatData.id;
+            localStorage.setItem('aiWorkbenchChats', JSON.stringify(savedChats));
+            renderHistory();
+        }
+
+        function loadChat(id) {
+            const chat = savedChats.find(c => c.id === id);
+            if (!chat) return;
+            currentChatId = id;
+            chatHistories = JSON.parse(JSON.stringify(chat.histories));
+            [1, 2, 3].forEach(i => {
+                const container = document.getElementById(`chat${i}`);
+                container.innerHTML = '';
+                chatHistories[i].forEach(msg => addMessage(i, msg.role, msg.content));
+                if (!chatHistories[i].length) container.innerHTML = `<div class="text-center text-themed-secondary text-sm py-8"><i class="ri-chat-3-line text-3xl mb-2 block opacity-50"></i>开始对话...</div>`;
+                setStatus(i, '就绪');
+            });
+            renderHistory();
+        }
+
+        function deleteChat(id, e) {
+            e.stopPropagation();
+            savedChats = savedChats.filter(c => c.id !== id);
+            localStorage.setItem('aiWorkbenchChats', JSON.stringify(savedChats));
+            if (currentChatId === id) newChat();
+            else renderHistory();
+        }
+
+        function clearAllHistory() {
+            if (!confirm('确定清空所有历史记录？')) return;
+            savedChats = [];
+            localStorage.removeItem('aiWorkbenchChats');
+            newChat();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = savedChats.map(chat => `
+                <div class="history-item ${chat.id === currentChatId ? 'active' : ''} p-3 cursor-pointer flex items-center justify-between group" onclick="loadChat('${chat.id}')">
+                    <div class="flex items-center gap-2 min-w-0 flex-1">
+                        <i class="ri-chat-3-line text-themed-secondary flex-shrink-0"></i>
+                        <span class="text-sm truncate">${escapeHtml(chat.title)}</span>
+                    </div>
+                    <button onclick="deleteChat('${chat.id}', event)" class="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-600/30 rounded-lg text-red-400 transition flex-shrink-0">
+                        <i class="ri-delete-bin-line"></i>
+                    </button>
+                </div>
+            `).join('') || '<div class="text-center text-themed-secondary text-sm py-4">暂无历史</div>';
+        }
+
+        function saveConfig() {
+            const config = { 
+                theme: currentTheme, 
+                fontSize: currentFontSize, 
+                chatBgColors, 
+                chatBgImages, 
+                msgBgColors, 
+                sharedBgEnabled, 
+                sharedBgImage,
+                shortcuts: shortcuts
+            };
+            [1, 2, 3].forEach(i => {
+                config[`provider${i}`] = document.getElementById(`provider${i}`).value;
+                config[`apiKey${i}`] = document.getElementById(`apiKey${i}`).value;
+                config[`baseUrl${i}`] = document.getElementById(`baseUrl${i}`).value;
+                config[`model${i}`] = document.getElementById(`model${i}`).value;
+                config[`modelCustom${i}`] = document.getElementById(`modelCustom${i}`).value;
+                config[`availableModels${i}`] = availableModels[i];
+            });
+            localStorage.setItem('aiWorkbenchConfigV13', JSON.stringify(config));
+            saveShortcuts();
+            showToast('✅ 配置已保存');
+            closeSettings();
+        }
+
+        function loadConfig() {
+            const saved = localStorage.getItem('aiWorkbenchConfigV13') || localStorage.getItem('aiWorkbenchConfigV12');
+            if (saved) {
+                try {
+                    const config = JSON.parse(saved);
+                    if (config.theme) setTheme(config.theme);
+                    if (config.fontSize) { currentFontSize = config.fontSize; document.getElementById('fontSizeSlider').value = config.fontSize; updateFontSizeLabel(config.fontSize); }
+                    if (config.shortcuts) {
+                        shortcuts = config.shortcuts;
+                        Object.keys(shortcuts).forEach(name => {
+                            const input = document.getElementById(`shortcut_${name}`);
+                            if (input) input.value = formatShortcut(shortcuts[name]);
+                        });
+                    }
+                    if (config.chatBgColors) { 
+                        chatBgColors = config.chatBgColors; 
+                        Object.keys(config.chatBgColors).forEach(i => { 
+                            const chat = document.getElementById(`chat${i}`); 
+                            if (chat) chat.style.backgroundColor = config.chatBgColors[i]; 
+                        }); 
+                    }
+                    if (config.chatBgImages) { 
+                        chatBgImages = config.chatBgImages; 
+                        Object.keys(config.chatBgImages).forEach(i => { 
+                            if (config.chatBgImages[i]) { 
+                                const chat = document.getElementById(`chat${i}`); 
+                                if (chat) { chat.style.backgroundImage = `url(${config.chatBgImages[i]})`; chat.style.backgroundColor = 'transparent'; } 
+                            } 
+                        }); 
+                    }
+                    if (config.msgBgColors) {
+                        msgBgColors = config.msgBgColors;
+                        Object.keys(config.msgBgColors).forEach(i => document.documentElement.style.setProperty(`--msg-bg-${i}`, config.msgBgColors[i]));
+                    }
+                    if (config.sharedBgImage) sharedBgImage = config.sharedBgImage;
+                    if (config.sharedBgEnabled) {
+                        sharedBgEnabled = true;
+                        document.getElementById('sharedBgStatus').textContent = '开';
+                        document.getElementById('sharedBgStatus').className = 'text-xs text-green-400';
+                        setTimeout(() => applySharedBg(), 100);
+                    }
+                    [1, 2, 3].forEach(i => {
+                        if (config[`provider${i}`]) { document.getElementById(`provider${i}`).value = config[`provider${i}`]; onProviderChange(i); }
+                        if (config[`apiKey${i}`]) document.getElementById(`apiKey${i}`).value = config[`apiKey${i}`];
+                        if (config[`baseUrl${i}`]) document.getElementById(`baseUrl${i}`).value = config[`baseUrl${i}`];
+                        if (config[`availableModels${i}`] && config[`availableModels${i}`].length > 0) {
+                            availableModels[i] = config[`availableModels${i}`];
+                            const sel = document.getElementById(`model${i}`);
+                            sel.innerHTML = availableModels[i].map(m => `<option value="${m}">${m}</option>`).join('');
+                            if (config[`provider${i}`] === 'custom') sel.classList.remove('hidden');
+                        }
+                        if (config[`model${i}`]) { 
+                            const sel = document.getElementById(`model${i}`); 
+                            if (![...sel.options].some(o => o.value === config[`model${i}`])) sel.innerHTML += `<option value="${config[`model${i}`]}">${config[`model${i}`]}</option>`; 
+                            sel.value = config[`model${i}`]; 
+                        }
+                        if (config[`modelCustom${i}`]) document.getElementById(`modelCustom${i}`).value = config[`modelCustom${i}`];
+                        updateModelLabel(i);
+                    });
+                    return true;
+                } catch (e) { console.error('Load config error:', e); }
+            }
+            return false;
+        }
+
+        // 快捷键功能
+        function formatShortcut(shortcut) {
+            const parts = [];
+            if (shortcut.ctrl) parts.push('Ctrl');
+            if (shortcut.shift) parts.push('Shift');
+            if (shortcut.alt) parts.push('Alt');
+            parts.push(shortcut.key.toUpperCase());
+            return parts.join('+');
+        }
+        
+        function startRecordShortcut(name) {
+            if (recordingShortcut) {
+                document.getElementById(`shortcut_${recordingShortcut}`).classList.remove('recording');
+            }
+            recordingShortcut = name;
+            const input = document.getElementById(`shortcut_${name}`);
+            input.classList.add('recording');
+            input.value = '按下快捷键...';
+        }
+        
+        function handleShortcutRecord(e) {
+            if (!recordingShortcut) return;
+            
+            // 忽略单独的修饰键
+            if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const shortcut = {
+                ctrl: e.ctrlKey || e.metaKey,
+                shift: e.shiftKey,
+                alt: e.altKey,
+                key: e.key.toLowerCase()
+            };
+            
+            // 允许任意按键，包括ESC、TAB等单独按键
+            shortcuts[recordingShortcut] = shortcut;
+            const input = document.getElementById(`shortcut_${recordingShortcut}`);
+            input.value = formatShortcut(shortcut);
+            input.classList.remove('recording');
+            recordingShortcut = null;
+            
+            saveShortcuts();
+            showToast('✅ 快捷键已更新');
+        }
+        
+        function matchShortcut(e, shortcut) {
+            // 支持单独按键（如ESC、TAB）或组合键
+            const ctrlMatch = shortcut.ctrl ? (e.ctrlKey || e.metaKey) : !(e.ctrlKey || e.metaKey);
+            const shiftMatch = shortcut.shift ? e.shiftKey : !e.shiftKey;
+            const altMatch = shortcut.alt ? e.altKey : !e.altKey;
+            return ctrlMatch && shiftMatch && altMatch && e.key.toLowerCase() === shortcut.key;
+        }
+        
+        function handleGlobalShortcut(e) {
+            // 如果正在录制快捷键，交给录制处理
+            if (recordingShortcut) {
+                handleShortcutRecord(e);
+                return;
+            }
+            
+            // 如果在输入框中，不处理快捷键（除非按的是记录的快捷键）
+            const isInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
+            
+            if (shortcuts.settings.enabled !== false && matchShortcut(e, shortcuts.settings)) {
+                e.preventDefault();
+                // 切换设置弹窗
+                const modal = document.getElementById('settingsModal');
+                if (modal.classList.contains('hidden')) {
+                    openSettings();
+                } else {
+                    closeSettings();
+                }
+            } else if (shortcuts.sharedBg.enabled !== false && matchShortcut(e, shortcuts.sharedBg)) {
+                e.preventDefault();
+                toggleSharedBg();
+            } else if (shortcuts.sidebar.enabled !== false && matchShortcut(e, shortcuts.sidebar)) {
+                e.preventDefault();
+                toggleSidebar();
+            } else if (shortcuts.toggleInputs.enabled !== false && matchShortcut(e, shortcuts.toggleInputs)) {
+                e.preventDefault();
+                toggleAllMiniInputs();
+            } else if (shortcuts.minimize.enabled !== false && matchShortcut(e, shortcuts.minimize)) {
+                e.preventDefault();
+                // 如果在 Electron 环境中，通过 IPC 通知主进程最小化窗口
+                if (window.electronAPI?.isElectron) {
+                    // Electron 环境下由全局快捷键处理
+                }
+            }
+        }
+        
+        function saveShortcuts() {
+            localStorage.setItem('aiWorkbenchShortcuts', JSON.stringify(shortcuts));
+        }
+        
+        function loadShortcuts() {
+            const saved = localStorage.getItem('aiWorkbenchShortcuts');
+            if (saved) {
+                try {
+                    shortcuts = JSON.parse(saved);
+                    // 更新输入框显示
+                    Object.keys(shortcuts).forEach(name => {
+                        const input = document.getElementById(`shortcut_${name}`);
+                        if (input) input.value = formatShortcut(shortcuts[name]);
+                        // 确保 enabled 属性存在
+                        if (shortcuts[name].enabled === undefined) shortcuts[name].enabled = true;
+                    });
+                    updateShortcutToggles();
+                } catch (e) {}
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 left-1/2 -translate-x-1/2 bg-themed-tertiary text-themed-primary px-4 py-2.5 rounded-xl shadow-2xl z-[100] border border-themed text-sm flex items-center gap-2';
+            toast.innerHTML = `<span>${msg}</span>`;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 2500);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            [1, 2, 3].forEach(i => {
+                onProviderChange(i);
+                document.getElementById(`model${i}`).addEventListener('change', () => updateModelLabel(i));
+                document.getElementById(`modelCustom${i}`).addEventListener('input', () => updateModelLabel(i));
+                document.documentElement.style.setProperty(`--msg-bg-${i}`, msgBgColors[i]);
+            });
+            try { savedChats = JSON.parse(localStorage.getItem('aiWorkbenchChats') || '[]'); } catch { savedChats = []; }
+            renderHistory();
+            loadShortcuts();
+            updateShortcutToggles();
+            if (loadConfig()) showToast('✅ 已加载配置');
+            setTheme(currentTheme);
+            createThemeDecorations(currentTheme);
+            currentChatId = Date.now().toString();
+        });
+        
+        // 全局快捷键监听
+        document.addEventListener('keydown', handleGlobalShortcut);
+    </script>
+</body>
+</html>
